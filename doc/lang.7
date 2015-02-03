@@ -1,0 +1,59 @@
+.TH Untitled 7 "January 2015" "CMSC 431" "User Manuals"
+.
+.SH NAME
+Untitled Language \- A language created for the Compilers class
+.
+.SH DESCRIPTION
+This language resembles a simplified version of C. This language is compiled
+to the x86_64 assembly language with the 
+.B Proj1
+compiler, from which an executable program can be assembled and linked using
+.BR nasm (1)
+and 
+.BR gcc (1)
+respectively.
+
+.P 
+The language operates as a calculator supporting basic integer 
+mathematic operations. 
+.
+.SH LANGUAGE
+.SS Mathematical Operations
+The following mathematical operations are supported in decreasing order of 
+precedence. Expressions may be constructed from signed 64 bit integers, or
+other mathematical expressions.
+.TP
+(expression)
+Parentheses. Override precedence of operators outside the parentheses. 
+.TP
+expression ** expression
+Integer exponentiation. Returns 1 if exponent is less than 1. 
+.TP
+-expression
+Negation. 
+.TP
+expression * expression
+Multiplication. Same precedence as division and modulus.
+.TP
+expression / expression
+Division. Same precedence as multiplication and modulus.
+.TP
+expression % expression
+Modulus. Same precedence as multiplication and division.
+.TP 
+expression + expression
+Addition. Same precedence as subtraction.
+.TP
+expression - expression
+Subtraction. Same precedence as addition.
+.
+.SH LIMITATIONS
+.IP \(bu
+The compiler supports only a single mathematical expression. 
+.IP \(bu
+A newline is required after the mathematical expression. 
+.IP \(bu
+Newlines may not be present within the expression.
+.
+.SH AUTHOR
+The Author <email@umbc.edu>
