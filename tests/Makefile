@@ -1,22 +1,31 @@
 VERSION ?= 1
 COMPILER ?= ../Proj$(VERSION)
-ALL_VERS = `seq 1..$(VERSION)`
 TESTS ?= ${CURDIR}
-BIN ?= $(TESTS)/bin
-TESTS_PJ1 := $(addsuffix .out, $(basename $(wildcard proj-1/*.in)))
+AS := nasm
+ASFLAGS := $(ASFLAGS) -f elf64
+CC := gcc
 
-current: tests-proj$(VERSION)
+OUTFILES := $(addsuffix .out, $(basename $(wildcard cases/*.in)))
+ASMFILES := $(addsuffix .asm, $(basename $(wildcard cases/*.in)))
+TESTS := $(addprefix check-, $(basename $(wildcard cases/*.in) .in))
 
-all:
-	$(foreach VER,$(ALL_VERS),test-proj$(VER))
+all: tests
 
-tests-proj1: $(TESTS_PJ1)
+tests: $(OUTFILES) $(ASMFILES) $(TESTS)
 
-proj-1/test-%.out: proj-1/test-%.in
+check-cases/test-%: cases/test-%.in cases/test-%.out
+#	@echo -n "Testing $<: "
+#	@head $<
+	@test "`bc < $<`" -eq "`$(word 2, $^)`" || echo "$< FAILED"
+
+cases/test-%.asm: cases/test-%.in
 	$(COMPILER) < $< > $@
 
-#tests-proj1: $(TESTS)/proj-$(VERSION)/*.in
-#	$(foreach TESTCASE,$?,`bash -c $(COMPILER) < $(TESTCASE) > bin/$@-\`basename $(TESTCASE) .in\`.out`)
+cases/test-%.o: cases/test-%.asm
+	$(AS) $(ASFLAGS) $<
+
+cases/test-%.out: cases/test-%.o
+	$(CC) $< -o $@
 
 clean:
-	-$(RM) $(TESTS)/proj-*/*.out
+	-$(RM) cases/*.out cases/*.o cases/*.asm
