@@ -97,3 +97,7 @@ tramp
 *.out
 *.app
 
+*.tab.cc
+*.tab.hh
+Calc
+scanner.cc
