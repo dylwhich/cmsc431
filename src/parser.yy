@@ -152,7 +152,7 @@ void oper_div() {
 	 "    pop rax\n"
 	 "    cqo\n"
 	 "    idiv QWORD rcx\n"
-	 "    push QWORD rdx\n");
+	 "    push QWORD rax\n");
 }
 
 void oper_neg() {
