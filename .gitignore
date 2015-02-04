@@ -101,3 +101,5 @@ tramp
 *.tab.hh
 Calc
 scanner.cc
+*.asm
+Proj*
