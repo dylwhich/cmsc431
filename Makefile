@@ -14,7 +14,7 @@ $(COMPILER): $(SRC)/Calc
 $(SRC)/Calc:
 	$(MAKE) -C $(SRC)
 
-tests:
+tests: $(COMPILER)
 	$(MAKE) -C $(TESTS)
 
 clean:
