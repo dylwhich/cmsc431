@@ -16,6 +16,7 @@ using namespace std;
  void asm_literal(int);
  void asm_func_header(const char*);
  void asm_func_footer();
+ void call_printf();
  void oper_add();
  void oper_sub();
  void oper_mul();
@@ -45,8 +46,11 @@ using namespace std;
 %%
 
 start:
-expr '\n' { asm_end(); }
-| expr '\n' expr
+program { asm_end(); }
+
+program:
+expr '\n' { call_printf(); }
+| program expr '\n' { call_printf(); }
 ;
 
 expr:
@@ -175,7 +179,6 @@ void call_printf() {
 }
 	 
 void asm_end() {
-  call_printf();
   asm_func_footer();
 }
 
