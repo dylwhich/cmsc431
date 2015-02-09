@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <stdio.h>
+#include <string.h>
 
 /* Parser error reporting routine */
 void yyerror(const char *msg);
@@ -16,6 +17,7 @@ using namespace std;
  void asm_literal(int);
  void asm_func_header(const char*);
  void asm_func_footer();
+ void asm_func_call(const char*, int, int);
  void call_printf();
  void oper_add();
  void oper_sub();
@@ -23,7 +25,9 @@ using namespace std;
  void oper_div();
  void oper_neg();
  void oper_mod();
+ void oper_pow();
  void asm_end();
+ void asm_pow();
 %}
 
 /* yylval union type */
@@ -61,7 +65,7 @@ INTEGER           { asm_literal($1); }
 | expr '/' expr   { oper_div(); }
 | expr '%' expr   { oper_mod(); }
 | '-' expr        { oper_neg(); }
-| expr POW expr   { oper_add(); /* FIXME */ }
+| expr POW expr   { oper_pow(); }
 | '(' expr ')'    { $$ = $2; }
 ;
 
@@ -171,13 +175,89 @@ void oper_mod() {
 	 "    push QWORD rbx\n");
 }
 
+void oper_pow() {
+  asm_func_call("intpow", 2, 1);
+}
+
+void asm_func_call(const char *name, int nargs, int nrets) {
+  int i;
+  char *reg;
+  for (i=0; i < nargs; i++) {
+    switch(i) {
+    case 0:
+      reg = "rdi";
+      break;
+    case 1:
+      reg = "rsi";
+      break;
+    case 2:
+      reg = "rdx";
+      break;
+    case 3:
+      reg = "rcx";
+      break;
+    case 4:
+      reg = "r8";
+      break;
+    case 5:
+      reg = "r9";
+      break;
+    default:
+      reg = NULL;
+      break;
+    }
+    if (reg != NULL) {
+      printf("    pop %s ; load argument %s(#%d)\n",
+	     reg, name, i);
+    } // otherwise just leave it on the stack
+  }
+  printf("    call %s ; call function %s\n", name, name);
+  if (nrets) {
+    printf("    push rax ; save return value on stack\n");
+  }
+}
+
+void asm_func_return_regval(const char *reg) {
+  if (strcmp(reg, "rax")) {
+    printf("    mov rax, %s ; return_regval(%s)\n", reg, reg);
+  }
+}
+
+void asm_func_return_const(int val) {
+  printf("    mov rax, QWORD %d ; return_const(%d)\n", val, val);
+}
+
+void asm_pow() {
+  asm_func_header("intpow");
+  printf("    mov rcx, rdi\n"
+	 "    mov rax, QWORD 1\n\n"
+
+	 "    cmp rcx, 0\n" // skip the loop for zero-power
+	 "    jz .end\n\n"
+
+	 "    cmp rcx, 0\n" // check for invalid (for integers) input
+	 "    jl .invalid\n\n"
+
+	 "    jmp .loop\n"
+	 "    .invalid:\n"
+	 "    mov rax, 0\n"
+	 "    jmp .end\n\n"
+
+	 "    .loop:\n"
+	 "    imul rax, rsi\n"
+	 "    loop .loop\n"
+	 "    .end:\n");
+  asm_func_return_regval("rax"); // technically redundant but good for future
+  asm_func_footer();
+}
+
 void call_printf() {
   printf("    mov rdi, fmt_decimal_nl\n"
 	 "    pop rsi\n"
 	 "    mov al, 0\n"
 	 "    call printf\n");
 }
-	 
+
 void asm_end() {
   asm_func_footer();
 }
@@ -191,6 +271,7 @@ void yyerror(const char *msg)
 int main()
 {   
     asm_start();
+    asm_pow();
     asm_func_header("main");
     return yyparse();
 }
