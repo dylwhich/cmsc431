@@ -11,14 +11,14 @@ TESTS := $(addprefix check-, $(basename $(wildcard cases/*.in) .in))
 
 all: tests
 
-tests: $(OUTFILES) $(ASMFILES) $(TESTS)
+tests: $(OUTFILES) $(ASMFILES) $(TESTS) $(COMPILER)
 
 check-cases/test-%: cases/test-%.in cases/test-%.out
 #	@echo -n "Testing $<: "
 #	@head $<
-	@test "`bc < $<`" -eq "`$(word 2, $^)`" || echo "$< FAILED"
+	@test "`(echo -n 'print(';cat $<;echo ')') | python`" -eq "`$(word 2, $^)`" || echo "$< FAILED"
 
-cases/test-%.asm: cases/test-%.in
+cases/test-%.asm: cases/test-%.in $(COMPILER)
 	$(COMPILER) < $< > $@
 
 cases/test-%.o: cases/test-%.asm
