@@ -181,7 +181,7 @@ void oper_pow() {
 
 void asm_func_call(const char *name, int nargs, int nrets) {
   int i;
-  char *reg;
+  const char *reg;
   for (i=0; i < nargs; i++) {
     switch(i) {
     case 0:
