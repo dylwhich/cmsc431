@@ -7,16 +7,16 @@ CC := gcc
 
 OUTFILES := $(addsuffix .out, $(basename $(wildcard cases/*.in)))
 ASMFILES := $(addsuffix .asm, $(basename $(wildcard cases/*.in)))
-TESTS := $(addprefix check-, $(basename $(wildcard cases/*.in) .in))
+CHECKS := $(addprefix check-, $(basename $(wildcard cases/*.in) .in))
 
 all: tests
 
-tests: $(OUTFILES) $(ASMFILES) $(TESTS) $(COMPILER)
+tests: $(OUTFILES) $(ASMFILES) $(COMPILER)
+
+run-tests: tests $(CHECKS)
 
 check-cases/test-%: cases/test-%.in cases/test-%.out
-#	@echo -n "Testing $<: "
-#	@head $<
-	@test "`(echo -n 'print(';cat $<;echo ')') | python`" -eq "`$(word 2, $^)`" || echo "$< FAILED"
+	@test "`(echo -n 'print(int(';cat $<;echo '))') | python`" -eq "`$(word 2, $^)`" || echo "$< FAILED"
 
 cases/test-%.asm: cases/test-%.in $(COMPILER)
 	$(COMPILER) < $< > $@

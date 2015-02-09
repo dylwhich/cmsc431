@@ -17,6 +17,9 @@ $(SRC)/Calc:
 tests: $(COMPILER)
 	$(MAKE) -C $(TESTS)
 
+check: $(COMPILER)
+	$(MAKE) -C $(TESTS) run-tests
+
 clean:
 	-$(RM) $(COMPILER)
 	$(MAKE) -C $(SRC) clean
