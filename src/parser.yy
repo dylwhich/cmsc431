@@ -51,6 +51,7 @@ using namespace std;
 
 start:
 program { asm_end(); }
+;
 
 program:
 expr '\n' { call_printf(); }
