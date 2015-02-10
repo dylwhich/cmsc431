@@ -2,7 +2,7 @@
 objs := scanner.o parser.tab.o
 
 # Libraries to link with executable calculator program
-LDLIBS := -lfl
+LDLIBS := -lfl -L.
 
 # Program to run instead of lex
 LEX := flex
