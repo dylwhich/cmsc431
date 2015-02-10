@@ -16,7 +16,7 @@ tests: $(OUTFILES) $(ASMFILES) $(COMPILER)
 run-tests: tests $(CHECKS)
 
 check-cases/test-%: cases/test-%.in cases/test-%.out
-	@test "`(echo -n 'print(int(';cat $<;echo '))') | python`" -eq "`$(word 2, $^)`" || echo "$< FAILED"
+	@test "`(echo -n 'print(int(';cat $<;echo '))') | python2`" -eq "`$(word 2, $^)`" || echo "$< FAILED"
 
 cases/test-%.asm: cases/test-%.in $(COMPILER)
 	$(COMPILER) < $< > $@
