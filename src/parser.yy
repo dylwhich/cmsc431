@@ -49,7 +49,11 @@ using namespace std;
 
 %%
 
-start:
+start: {
+  asm_start();
+  asm_pow();
+  asm_func_header("main");
+ }
 program { asm_end(); }
 ;
 
@@ -271,8 +275,5 @@ void yyerror(const char *msg)
 
 int main()
 {   
-    asm_start();
-    asm_pow();
-    asm_func_header("main");
     return yyparse();
 }
