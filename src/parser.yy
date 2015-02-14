@@ -245,7 +245,7 @@ void asm_pow() {
 
 	 "    jmp .loop\n"
 	 "    .invalid:\n"
-	 "    mov rax, 0\n"
+	 "    mov rax, 1\n"
 	 "    jmp .end\n\n"
 
 	 "    .loop:\n"
