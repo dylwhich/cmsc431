@@ -1,0 +1,53 @@
+Project 1
+
+Name: Dylan Whichard (dylwhich) 
+===============================================================================
+
+Correctness/Completeness (55%)
+     (2 pts) Compiler handles expressions consisting of a single number
+     (3 pts) Compiler handles addition
+     (3 pts) Compiler handles subtraction
+     (3 pts) Compiler handles multiplication
+     (3 pts) Compiler handles division
+     (3 pts) Compiler handles modulus
+     (3 pts) Compiler handles negation
+     (5 pts) Compiler handles exponentiation
+     (4 pts) Exponentiation is done using intpow function written in assembly
+     (3 pts) Compiler handles parentheses
+     (6 pts) Compiler handles repeated operations in an expression
+     (8 pts) Compiler handles expressions that have many operators with 
+             different precedences
+     (3 pts) Compiler recognizes and handles syntax errors
+     (3 pts) Generated code only relies on printf as an extern C function
+     (3 pts) Call stack is cleaned up at the end of each function in
+             generated code
+
+Testing (30%)
+     (5 pts) "Easy" testcase
+    (10 pts) "Medium" testcase
+    (15 pts) "Hard" testcase
+
+Style (5%)
+     (5 pts) Sensible names given to variables, functions, grammar symbols etc.
+             Algorithms are not unnecessarily complex.
+             Code adheres to a reasonable degree of neatness.
+             Constants are declared for meaningful literal values when possible
+
+Documentation (10%)
+     (5 pts) Adequate documentation for files, functions, classes, complex 
+             parts of code, etc.
+     (5 pts) Man page describes structure and features of the language
+
+-------------------------------------------------------------------------------
+
+Comments:
+
+Outstanding work! 
+
+All specified mathematical operations are supported. 
+Test cases were complex and demonstrated the compiler's abilities well. 
+Code and documentation look good.
+
+===============================================================================
+
+Total Score: 100/100
