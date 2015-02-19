@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define MAX_SYMBOL_LENGTH 64
+#define SYMBOL_MAX_LENGTH 64
 
 /*
 enum StorageLocationType {
@@ -52,6 +52,7 @@ struct SymbolType {
 struct Symbol {
   struct SymbolType type;
   long offset;
+  size_t size;
   struct Block *scope;
   char label[64];
   UT_hash_handle hh;
@@ -115,7 +116,7 @@ void __block_grow_children(struct Block *this);
 
 void statement_init(struct Statement *self, struct Block *parent);
 
-void symbol_init(struct Symbol *this, struct SymbolType type, long offset, struct Block *scope, const char *label);
+void symbol_init(struct Symbol *this, struct SymbolType type, long offset, size_t size, struct Block *scope, const char *label);
 void symbol_write_declaration(struct Symbol *this, FILE *out);
 void symbol_write_reference(struct Symbol *this, FILE *out);
 

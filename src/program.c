@@ -41,7 +41,7 @@ void block_write_head(struct Block *this, FILE *out) {
   struct SubBlock *child;
 
   if (block_is_global(this)) {
-    fprintf(out, ".data\n");
+    fprintf(out, "SECTION .bss\n");
   }
 
   for (symbol=this->symbol_table; symbol != NULL; symbol = symbol->hh.next) {
@@ -57,6 +57,13 @@ void block_write_head(struct Block *this, FILE *out) {
 
 void block_write_body(struct Block *this, FILE *out) {
   struct SubBlock *child;
+
+  if (block_is_global(this)) {
+    fprintf(out, "    SECTION .text:\n");
+    fprintf(out, "    global main\n");
+    fprintf(out, "main:\n");
+  }
+
   for (child = this->children; child != (this->children + this->num_children); child++) {
     if (child->type == BLOCK) {
       block_write_body(&(child->value.block), out);
@@ -107,12 +114,25 @@ struct Statement *block_add_statement(struct Block *this) {
 }
 
 struct Symbol *block_add_symbol(struct Block *this, const char *name, struct SymbolType type) {
-  
+  struct Symbol *symbol = (struct Symbol*)malloc(sizeof(struct Symbol));
+
+  // TODO: don't use a constant size for the symbol table...
+  symbol_init(symbol, type, this->global_data->next_data_offset, 4, this, name);
+  this->global_data->next_data_offset += 4;
+
+  HASH_ADD_STR(this->symbol_table, label, symbol);
 }
 
 struct Symbol *block_resolve_symbol(struct Block *this, const char *name) {
-  struct Symbol *result;
+  struct Symbol *result = NULL;
   HASH_FIND_STR(this->symbol_table, name, result);
+  if (result != NULL) {
+    return result;
+  } else if (!block_is_global(this)) {
+    return block_resolve_symbol(this->parent, name);
+  } else {
+    return NULL;
+  }
 }
 
 bool block_is_global(struct Block *this) {
@@ -149,19 +169,21 @@ void statement_init(struct Statement *self, struct Block *parent) {
   // TODO
 }
 
-
-void symbol_init(struct Symbol *this, struct SymbolType type, long offset, struct Block *scope, const char *label) {
+void symbol_init(struct Symbol *this, struct SymbolType type, long offset,
+		 size_t size, struct Block*scope, const char *label) {
   this->type = type;
   this->offset = offset;
+  this->size = size;
 
   this->scope = scope;
 
-  strncpy(this->label, label, MAX_SYMBOL_LENGTH);
-  this->label[MAX_SYMBOL_LENGTH-1] = '\0';
+  strncpy(this->label, label, SYMBOL_MAX_LENGTH);
+  this->label[SYMBOL_MAX_LENGTH-1] = '\0';
 }
 
 void symbol_write_declaration(struct Symbol *this, FILE *out) {
-  fprintf(out, "    dq ?\n");
+  // TODO don't hardcode this
+  fprintf(out, "    resq %ld\n", this->size / 8 ? this->size / 8 : 1);
 }
 
 void symbol_write_reference(struct Symbol *this, FILE *out) {
