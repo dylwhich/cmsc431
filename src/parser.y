@@ -1,6 +1,5 @@
 %{
-#include <iostream>
-#include <cmath>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -9,8 +8,6 @@ void yyerror(const char *msg);
 
 /* Scannar routine defined by Flex */
 int yylex();
-
-using namespace std;
 
 /* Our functions */
  void asm_start();
@@ -269,8 +266,8 @@ void asm_end() {
 
 void yyerror(const char *msg)
 {
-    cerr << "Parser error:\n" << msg << endl;
-    exit(1);
+  fprintf(stderr, "Parser error:\n    %s\n", msg);
+  exit(1);
 }
 
 int main()

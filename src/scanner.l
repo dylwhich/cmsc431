@@ -1,6 +1,6 @@
 %{
-#include <cstdlib>
-#include "parser.tab.hh"
+#include <stdlib.h>
+#include "parser.tab.h"
 %}
 
 %%

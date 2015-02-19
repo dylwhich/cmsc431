@@ -15,23 +15,23 @@ YFLAGS := -d
 
 # Link objects and build executable
 Calc: $(objs)
-	$(CXX) $(objs) $(LDLIBS) -o $@
+	$(CC) $(objs) $(LDLIBS) -o $@
 
 # Compile scanner to object file
-scanner.o: scanner.cc parser.tab.hh
+scanner.o: scanner.c parser.tab.h
 
 # Compile parser to object file
-parser.tab.o: parser.tab.cc
+parser.tab.o: parser.tab.c
 
 # Build scanner implementation from flex file
-scanner.cc: scanner.l
+scanner.c: scanner.l
 	$(LEX) -o $@ $<
 
 # Build *.tab.* files from bison file
-parser.tab.hh parser.tab.cc: parser.yy
+parser.tab.h parser.tab.c: parser.y
 	$(YACC) $(YFLAGS) $<
 
 # Remove compilation artifacts
 .PHONY: clean
 clean:
-	-$(RM) *.o *.tab.* scanner.cc Calc
+	-$(RM) *.o *.tab.* scanner.c Calc
