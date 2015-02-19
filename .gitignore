@@ -99,7 +99,10 @@ tramp
 
 *.tab.cc
 *.tab.hh
+*.tab.h
+*.tab.c
 Calc
 scanner.cc
+scanner.c
 *.asm
 Proj*
