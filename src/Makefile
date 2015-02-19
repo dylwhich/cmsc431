@@ -1,5 +1,5 @@
 # Object files
-objs := scanner.o parser.tab.o
+objs := program.o scanner.o parser.tab.o
 
 # Libraries to link with executable calculator program
 LDLIBS := -lfl -L.
@@ -16,6 +16,8 @@ YFLAGS := -d
 # Link objects and build executable
 Calc: $(objs)
 	$(CC) $(objs) $(LDLIBS) -o $@
+
+program.o: program.c program.h parser.tab.h
 
 # Compile scanner to object file
 scanner.o: scanner.c parser.tab.h
