@@ -140,13 +140,31 @@ bool block_is_global(struct Block *this) {
 }
 
 void block_destroy(struct Block *this) {
+  struct SubBlock *child;
+  struct Symbol *symbol, *tmp_symbol;
   free(this->name);
   this->name = NULL;
+
+  for (child = this->children; child != (this->children + this->num_children); child++) {
+    if (child->type == BLOCK) {
+      block_destroy(&(child->value.block));
+    } else if (child->type == STATEMENT) {
+      // TODO statement_destroy
+    }
+  }
+
+  HASH_ITER(hh, this->symbol_table, symbol, tmp_symbol) {
+    HASH_DEL(this->symbol_table, symbol);
+    free(symbol);
+  }
+
+  free(this->symbol_table);
 
   free(this->children);
   this->children = NULL;
 
   if (block_is_global(this)) {
+    free(this->global_data->data_label);
     free(this->global_data);
     this->global_data = NULL;
   } else {
