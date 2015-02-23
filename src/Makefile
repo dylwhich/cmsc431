@@ -15,7 +15,7 @@ YFLAGS := -d
 
 # Link objects and build executable
 Calc: $(objs)
-	$(CC) $(objs) $(LDLIBS) -o $@
+	$(CC) $(CFLAGS) $(objs) $(LDLIBS) -o $@
 
 program.o: program.c program.h parser.tab.h
 
