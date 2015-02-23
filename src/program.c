@@ -205,5 +205,6 @@ void symbol_write_declaration(struct Symbol *this, FILE *out) {
 }
 
 void symbol_write_reference(struct Symbol *this, FILE *out) {
-  fprintf(out, "[%s+%ld]", this->scope->global_data->data_label);
+  // TODO don't hardcode size
+  fprintf(out, "qword [%s+%ld]", this->scope->global_data->data_label, this->offset);
 }
