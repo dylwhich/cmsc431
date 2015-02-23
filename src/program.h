@@ -10,7 +10,6 @@
 
 #define SYMBOL_MAX_LENGTH 64
 
-/*
 enum StorageLocationType {
   LABEL,
   ADDRESS,
@@ -24,15 +23,14 @@ enum Register {
 };
 
 union StorageLocationValue {
-  const long address;
-  const Register regname;
+  long address;
+  enum Register regname;
 };
     
 struct StorageLocation {
-  const StorageLocationType type;
-  const StorageLocationValue value;
+  enum StorageLocationType type;
+  union StorageLocationValue value;
 };
-*/
 
 enum SymbolTypeType {
   PRIMITIVE,
@@ -55,10 +53,12 @@ struct Symbol {
   size_t size;
   struct Block *scope;
   char label[64];
+  struct StorageLocation location;
   UT_hash_handle hh;
 };
 
 struct Statement {
+  long buffer_size;
   char *buffer;
 };
 
@@ -106,7 +106,7 @@ bool block_is_global(struct Block *this);
 struct Block *block_add_child(struct Block *this);
 struct Block *block_add_named_child(struct Block *this, const char *name);
 struct Statement *block_add_statement(struct Block *this);
-struct Symbol *block_add_symbol(struct Block *this, const char *name, struct SymbolType type);
+struct Symbol *block_add_symbol(struct Block *this, const char *name, struct SymbolType type, struct StorageLocation location);
 struct Symbol *block_resolve_symbol(struct Block *this, const char *name);
 
 
@@ -115,7 +115,10 @@ void block_destroy(struct Block *this);
 // PRIVATE!
 void __block_grow_children(struct Block *this);
 
-void statement_init(struct Statement *self, struct Block *parent);
+void statement_init(struct Statement *this, struct Block *parent);
+void statement_append_instruction(struct Statement *this, const char *asm_instruction);
+void statement_write(struct Statement *this, FILE *out);
+void statement_destroy(struct Statement *this);
 
 void symbol_init(struct Symbol *this, struct SymbolType type, long offset, size_t size, struct Block *scope, const char *label);
 void symbol_write_declaration(struct Symbol *this, FILE *out);

@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include "program.h"
 
 /* Parser error reporting routine */
 void yyerror(const char *msg);
