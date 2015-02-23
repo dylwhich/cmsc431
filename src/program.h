@@ -107,6 +107,7 @@ struct Block *block_add_child(struct Block *this);
 struct Block *block_add_named_child(struct Block *this, const char *name);
 struct Statement *block_add_statement(struct Block *this);
 struct Symbol *block_add_symbol(struct Block *this, const char *name, struct SymbolType type);
+struct Symbol *block_resolve_symbol(struct Block *this, const char *name);
 
 
 void block_destroy(struct Block *this);
