@@ -4,6 +4,7 @@ TESTS ?= ${CURDIR}
 AS := nasm
 ASFLAGS := $(ASFLAGS) -f elf64
 CC := gcc
+CFLAGS := $(CFLAGS) -ggdb
 
 OUTFILES := $(addsuffix .out, $(basename $(wildcard cases/*.in)))
 ASMFILES := $(addsuffix .asm, $(basename $(wildcard cases/*.in)))
@@ -25,7 +26,7 @@ cases/test-%.o: cases/test-%.asm
 	$(AS) $(ASFLAGS) $<
 
 cases/test-%.out: cases/test-%.o
-	$(CC) $< -o $@
+	$(CC) $(CFLAGS) $< -o $@
 
 clean:
 	-$(RM) cases/*.out cases/*.o cases/*.asm

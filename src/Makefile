@@ -13,6 +13,8 @@ YACC := bison
 # Flags to pass to YACC program
 YFLAGS := -d
 
+CFLAGS := -ggdb -Wall
+
 # Link objects and build executable
 Calc: $(objs)
 	$(CC) $(CFLAGS) $(objs) $(LDLIBS) -o $@
