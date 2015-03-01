@@ -9,7 +9,7 @@
 void block_init(struct Block *this, const char *name, struct Block *parent) {
   this->symbol_table = NULL;
 
-  this->name = malloc(strlen(name) + 1);
+  this->name = (char*) malloc(sizeof(char) * (strlen(name) + 1));
   strcpy(this->name, name);
   this->name[strlen(name)] = '\0';
 
@@ -17,7 +17,7 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
 
   this->len_children = 4;
   this->num_children = 0;
-  this->children = malloc(this->len_children * sizeof(struct Block));
+  this->children = malloc(this->len_children * sizeof(struct SubBlock));
 
   // Keep the global data in sync with all the blocks
   if (block_is_global(this)) {
@@ -48,7 +48,7 @@ void block_write_head(struct Block *this, FILE *out) {
     symbol_write_declaration(symbol, out);
   }
 
-  for (child = this->children; child != (this->children + this->num_children); child++) {
+  for (child = this->children; child < (this->children + this->num_children); child++) {
     if (child->type == BLOCK) {
       block_write_head(&(child->value.block), out);
     }
@@ -64,7 +64,7 @@ void block_write_body(struct Block *this, FILE *out) {
     fprintf(out, "main:\n");
   }
 
-  for (child = this->children; child != (this->children + this->num_children); child++) {
+  for (child = this->children; child < (this->children + this->num_children); child++) {
     if (child->type == BLOCK) {
       block_write_body(&(child->value.block), out);
     } else if (child->type == STATEMENT) {
@@ -75,7 +75,7 @@ void block_write_body(struct Block *this, FILE *out) {
 
 void block_write_tail(struct Block *this, FILE *out) {
   struct SubBlock *child;
-  for (child = this->children; child != (this->children + this->num_children); child++) {
+  for (child = this->children; child < (this->children + this->num_children); child++) {
     if (child->type == BLOCK) {
       block_write_tail(&(child->value.block), out);
     }
@@ -94,13 +94,14 @@ struct Block *block_add_child(struct Block *this) {
 }
 
 struct Block *block_add_named_child(struct Block *this, const char *name) {
-  char *tmp = alloca(sizeof(char) * (strlen(name) + strlen(this->name) + 2));
+  char *tmp = (char*) alloca(sizeof(char) * (strlen(name) + strlen(this->name) + 2));
   sprintf(tmp, "%s_%s", this->name, name);
 
   while (this->num_children >= this->len_children) {
     __block_grow_children(this);
   }
 
+  this->children[this->num_children].type = BLOCK;
   block_init(&(this->children[this->num_children].value.block), tmp, this);
   return &(this->children[this->num_children++].value.block);
 }
@@ -110,6 +111,7 @@ struct Statement *block_add_statement(struct Block *this) {
     __block_grow_children(this);
   }
 
+  this->children[this->num_children].type = STATEMENT;
   statement_init(&(this->children[this->num_children].value.statement), this);
   return &(this->children[this->num_children++].value.statement);
 }
@@ -147,7 +149,7 @@ void block_destroy(struct Block *this) {
   free(this->name);
   this->name = NULL;
 
-  for (child = this->children; child != (this->children + this->num_children); child++) {
+  for (child = this->children; child < (this->children + this->num_children); child++) {
     if (child->type == BLOCK) {
       block_destroy(&(child->value.block));
     } else if (child->type == STATEMENT) {
