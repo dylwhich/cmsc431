@@ -11,6 +11,11 @@ void yyerror(const char *msg);
 /* Scannar routine defined by Flex */
 int yylex();
 
+ struct Block global_scope;
+ struct Block *cur_scope;
+ struct Symbol cur_symbol;
+ struct Statement *cur_stmt;
+
 /* Our functions */
  void asm_start();
  void asm_literal(int);
@@ -25,8 +30,6 @@ int yylex();
  void oper_neg();
  void oper_mod();
  void oper_pow();
- void asm_end();
- void asm_pow();
 %}
 
 /* yylval union type */
@@ -36,6 +39,7 @@ int yylex();
 
 /* Miscellaneous token types */
 %token <longval> INTEGER
+%token PRINT
 
 /* Operators */
 %left '+' '-'
@@ -49,16 +53,34 @@ int yylex();
 %%
 
 start: {
-  asm_start();
-  asm_pow();
-  asm_func_header("main");
+  block_init(&global_scope, "global", NULL);
+  cur_scope = &global_scope;
  }
-program { asm_end(); }
+program {
+  block_write(&global_scope, stdout);
+  block_destroy(&global_scope);
+  cur_scope = NULL;
+}
 ;
 
 program:
-expr '\n' { call_printf(); }
-| program expr '\n' { call_printf(); }
+{ cur_stmt = block_add_statement(cur_scope); } stmt '\n' {  }
+| program { cur_stmt = block_add_statement(cur_scope); } stmt '\n' { }
+;
+
+stmt:
+expr
+| print_stmt
+;
+
+print_stmt:
+PRINT {
+  statement_append_instruction(cur_stmt,
+			       "mov rdi, fmt_decimal_nl\n"
+			       "pop rsi\n"
+			       "mov al, 0\n"
+			       "call printf");
+}
 ;
 
 expr:
@@ -87,7 +109,7 @@ void asm_start() {
 }
 
 void asm_const_int(const char *name, int value) {
-  printf("%s: QWORD %d\n");
+  printf("%s: QWORD %d\n", name, value);
 }
 
 /*void asm_const_char(const char *name, char *value) {
@@ -124,7 +146,9 @@ void asm_const_int(const char *name, int value) {
       }*/
 
 void asm_literal(int num) {
-  printf("    push QWORD %d\n", num);
+  char tmp[32];
+  sprintf(tmp, "push QWORD %d", num);
+  statement_append_instruction(cur_stmt, tmp);
 }
 
 // This will generate a function header for a function that takes n args
@@ -144,43 +168,31 @@ void asm_func_footer() {
 }
 
 void oper_add() {
-  printf("    pop rax\n"
-	 "    add [rsp], rax\n");
+  statement_append_instruction(cur_stmt, "pop rax\nadd [rsp], rax");
 }
 
 void oper_mul() {
-  printf("    pop rax\n"
-	 "    imul rax, [rsp]\n"
-	 "    mov [rsp], rax\n");
+  statement_append_instruction(cur_stmt, "pop rax\nimul rax, [rsp]\nmov [rsp], rax");
 }
 
 void oper_sub() {
-  printf("    pop rax\n"
-	 "    sub [rsp], rax\n");
+  statement_append_instruction(cur_stmt, "pop rax\nsub [rsp], rax");
 }
 
 void oper_div() {
-  printf("    pop rcx\n"
-	 "    pop rax\n"
-	 "    cqo\n"
-	 "    idiv QWORD rcx\n"
-	 "    push QWORD rax\n");
+  statement_append_instruction(cur_stmt, "pop rcx\npop rax\ncqo\nidiv QWORD rcx\npush QWORD rax");
 }
 
 void oper_neg() {
-  printf("    neg QWORD [rsp]\n");
+  statement_append_instruction(cur_stmt, "neg QWORD [rsp]");
 }
 
 void oper_mod() {
-  printf("    pop rcx\n"
-	 "    pop rax\n"
-	 "    cqo\n"
-	 "    idiv QWORD rcx\n"
-	 "    push QWORD rbx\n");
+  statement_append_instruction(cur_stmt, "pop rcx\npop rax\ncqo\nidiv QWORD rcx\npush QWORD rbx");
 }
 
 void oper_pow() {
-  asm_func_call("intpow", 2, 1);
+  statement_append_instruction(cur_stmt, "pop rdi\npop rsi\ncall intpow\npush rax");
 }
 
 void asm_func_call(const char *name, int nargs, int nrets) {
@@ -231,39 +243,11 @@ void asm_func_return_const(int val) {
   printf("    mov rax, QWORD %d ; return_const(%d)\n", val, val);
 }
 
-void asm_pow() {
-  asm_func_header("intpow");
-  printf("    mov rcx, rdi\n"
-	 "    mov rax, QWORD 1\n\n"
-
-	 "    cmp rcx, 0\n" // skip the loop for zero-power
-	 "    jz .end\n\n"
-
-	 "    cmp rcx, 0\n" // check for invalid (for integers) input
-	 "    jl .invalid\n\n"
-
-	 "    jmp .loop\n"
-	 "    .invalid:\n"
-	 "    mov rax, 1\n"
-	 "    jmp .end\n\n"
-
-	 "    .loop:\n"
-	 "    imul rax, rsi\n"
-	 "    loop .loop\n"
-	 "    .end:\n");
-  asm_func_return_regval("rax"); // technically redundant but good for future
-  asm_func_footer();
-}
-
 void call_printf() {
   printf("    mov rdi, fmt_decimal_nl\n"
 	 "    pop rsi\n"
 	 "    mov al, 0\n"
 	 "    call printf\n");
-}
-
-void asm_end() {
-  asm_func_footer();
 }
 
 void yyerror(const char *msg)
