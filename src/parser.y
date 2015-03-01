@@ -34,12 +34,18 @@ int yylex();
 
 /* yylval union type */
 %union {
-    long longval;
+  long longval;
+  float floatval;
+  char idval[64];
 }
 
 /* Miscellaneous token types */
 %token <longval> INTEGER
+%token <floatval> FLOAT
+%token <idval> ID
 %token PRINT
+%token <longval> INTTYPE
+%token <floatval> FLOATTYPE
 
 /* Operators */
 %left '+' '-'
@@ -70,6 +76,8 @@ program:
 
 stmt:
 expr
+| declare
+| assign
 | print_stmt
 ;
 
@@ -83,8 +91,27 @@ PRINT {
 }
 ;
 
+declare:
+INTTYPE ID {
+  struct SymbolType st;
+  struct StorageLocation sl;
+  st.type = PRIMITIVE;
+  st.value.primitive = $1;
+
+  sl.type = LABEL;
+
+  block_add_symbol(cur_scope, $2, st, sl);
+}
+| FLOATTYPE ID
+;
+
+assign:
+ID '=' expr
+| ID '=' ID
+;
+
 expr:
-INTEGER           { asm_literal($1); }
+INTEGER           { asm_literal($1); $$ = INTTYPE; }
 | expr '+' expr   { oper_add(); }
 | expr '-' expr   { oper_sub(); }
 | expr '*' expr   { oper_mul(); }

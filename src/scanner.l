@@ -1,5 +1,6 @@
 %{
 #include <stdlib.h>
+#include <string.h>
 #include "parser.tab.h"
 %}
 
@@ -19,6 +20,20 @@
 "print" {
     /* Print statement */
     return PRINT;
+}
+
+"int" {
+    return INTTYPE;
+}
+
+"float" {
+    return FLOATTYPE;
+}
+
+[a-zA-Z_][a-zA-Z_0-9]* {
+    strncpy(yylval.idval, yytext, 63);
+    yylval.idval[63] = '\0';
+    return ID;
 }
 
 [ \t]+ {
