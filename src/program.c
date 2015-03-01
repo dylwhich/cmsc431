@@ -41,7 +41,14 @@ void block_write_head(struct Block *this, FILE *out) {
   struct SubBlock *child;
 
   if (block_is_global(this)) {
+    // BEGIN HACK
+    // TODO make something for declaring constant globals here
+    fprintf(out, "extern printf\n\n");
+    fprintf(out, "SECTION .data\n");
+    fprintf(out, "fmt_decimal_nl:\n    db \"%%ld\", 10, 0\n\n");
+    // END HACK
     fprintf(out, "SECTION .bss\n");
+    fprintf(out, "%s: \n", this->global_data->data_label);
   }
 
   for (symbol=this->symbol_table; symbol != NULL; symbol = symbol->hh.next) {
@@ -61,14 +68,46 @@ void block_write_body(struct Block *this, FILE *out) {
   if (block_is_global(this)) {
     fprintf(out, "    SECTION .text:\n");
     fprintf(out, "    global main\n");
-    fprintf(out, "main:\n");
+    fprintf(out,
+	    "intpow:\n"
+	    "    push rbp\n"
+	    "    mov rbp, rsp\n\n"
+
+	    "    mov rcx, rdi\n"
+	    "    mov rax, QWORD 1\n\n"
+
+	    "    cmp rcx, 0\n" // skip the loop for zero-power
+	    "    jz .end\n\n"
+
+	    "    cmp rcx, 0\n" // check for invalid (for integers) input
+	    "    jl .invalid\n\n"
+
+	    "    jmp .loop\n"
+	    "    .invalid:\n"
+	    "    mov rax, 1\n"
+	    "    jmp .end\n\n"
+
+	    "    .loop:\n"
+	    "    imul rax, rsi\n"
+	    "    loop .loop\n"
+	    "    .end:\n\n"
+
+	    "    mov rsp, rbp\n"
+	    "    pop rbp\n"
+	    "    ret\n");
+    // we would do what asm_func_return_regval does, but it's
+    // redundant so it doesn't do anything anyway
+    fprintf(out,
+	    "main:\n"
+	    "push rbp\n"
+	    "mov rbp, rsp\n");
   }
 
   for (child = this->children; child < (this->children + this->num_children); child++) {
     if (child->type == BLOCK) {
       block_write_body(&(child->value.block), out);
     } else if (child->type == STATEMENT) {
-      fprintf(out, "%s", child->value.statement.buffer);
+      statement_write(&child->value.statement, out);
     }
   }
 }
@@ -80,10 +119,14 @@ void block_write_tail(struct Block *this, FILE *out) {
       block_write_tail(&(child->value.block), out);
     }
   }
-  // TODO is this actually right?
-  fprintf(out, "mov rsp, rbp\n");
-  fprintf(out, "mov rbp\n");
-  fprintf(out, "ret\n");
+
+  if (block_is_global(this)) {
+    // TODO is this actually right?
+    // No, it should be part of wrapping a block in a function!
+    fprintf(out, "mov rsp, rbp\n");
+    fprintf(out, "pop rbp\n");
+    fprintf(out, "ret\n");
+  }
 }
 
 struct Block *block_add_child(struct Block *this) {

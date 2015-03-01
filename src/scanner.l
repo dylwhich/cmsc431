@@ -16,6 +16,11 @@
     return POW;
 }
 
+"print" {
+    /* Print statement */
+    return PRINT;
+}
+
 [ \t]+ {
     /* Eat whitespace */
 }
