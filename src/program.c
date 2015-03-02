@@ -163,8 +163,8 @@ struct Symbol *block_add_symbol(struct Block *this, const char *name, struct Sym
   struct Symbol *symbol = (struct Symbol*)malloc(sizeof(struct Symbol));
 
   // TODO: don't use a constant size for the symbol table...
-  symbol_init(symbol, type, this->global_data->next_data_offset, 4, this, name);
-  this->global_data->next_data_offset += 4;
+  symbol_init(symbol, type, this->global_data->next_data_offset, 8, this, name);
+  this->global_data->next_data_offset += 8;
 
   HASH_ADD_STR(this->symbol_table, label, symbol);
   return symbol;
