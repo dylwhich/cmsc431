@@ -110,22 +110,53 @@ INTTYPE ID {
   struct SymbolType st;
   struct StorageLocation sl;
   st.type = PRIMITIVE;
-  st.value.primitive = $1;
+  //printf("st.value.primitive = %d\n", INTTYPE);
+  st.value.primitive = INTTYPE;
 
   sl.type = LABEL;
 
   block_add_symbol(cur_scope, $2, st, sl);
 }
-| FLOATTYPE ID
+| FLOATTYPE ID {
+  struct SymbolType st;
+  struct StorageLocation sl;
+  sl.type = PRIMITIVE;
+  st.value.primitive = FLOATTYPE;
+
+  sl.type = LABEL;
+  block_add_symbol(cur_scope, $2, st, sl);
+}
 ;
 
 assign:
-ID '=' expr
-| ID '=' ID
+ID '=' expr {
+  char ref[64];
+  char inst[80];
+  struct Symbol *target = block_resolve_symbol(cur_scope, $1);
+
+  if (target == NULL) {
+    yyerror("Unknown identifier");
+  } else {
+    if (target->type.type == PRIMITIVE) {
+      if (target->type.value.primitive != $3) {
+	yyerror("Incompatible types");
+      } else {
+	symbol_get_reference(target, ref);
+	printf("; reference to %s is %s\n", target->label, ref);
+	sprintf(inst, "mov %s, rax; %s = <stmt>", ref, target->label);
+	statement_append_instruction(cur_stmt, "pop QWORD rax");
+	statement_append_instruction(cur_stmt, inst);
+      }
+    }
+  }
+}
 ;
 
 expr:
 INTEGER           { asm_literal($1); $$ = INTTYPE; }
+| ID {
+  $$ = block_resolve_symbol(cur_scope, $1)->type.value.primitive;
+}
 | expr '+' expr   { oper_add(); }
 | expr '-' expr   { oper_sub(); }
 | expr '*' expr   { oper_mul(); }
