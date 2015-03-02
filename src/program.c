@@ -380,3 +380,22 @@ void symbol_write_reference(struct Symbol *this, FILE *out) {
     break;
   }
 }
+
+void symbol_get_reference(struct Symbol *this, char *out) {
+  // This function should be renamed symbol_write_dereference, and it
+  // should just put brackets around the actual
+  // symbol_write_reference...
+  switch(this->location.type) {
+  case LABEL:
+    sprintf(out, "qword [%s+%ld]", this->scope->global_data->data_label, this->offset);
+    break;
+
+  case ADDRESS:
+    sprintf(out, "qword [%ld]", this->location.value.address);
+    break;
+
+    //case REGISTER:
+    //register_write_name(this->location.value.regname, out);
+    //break;
+  }
+}

@@ -127,5 +127,6 @@ void symbol_init(struct Symbol *this, struct SymbolType type, long offset,
 		 size_t size, struct Block *scope, const char *label);
 void symbol_write_declaration(struct Symbol *this, FILE *out);
 void symbol_write_reference(struct Symbol *this, FILE *out);
+void symbol_get_reference(struct Symbol *this, char *out);
 
 #endif
