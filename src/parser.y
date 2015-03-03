@@ -20,10 +20,6 @@ int yylex();
  void asm_start();
  void asm_literal_int(int);
  void asm_literal_float(double);
- void asm_func_header(const char*);
- void asm_func_footer();
- void asm_func_call(const char*, int, int);
- void call_printf();
  void oper_add(enum yytokentype);
  void oper_sub(enum yytokentype);
  void oper_mul(enum yytokentype);
@@ -200,39 +196,6 @@ void asm_const_int(const char *name, int value) {
   printf("%s: QWORD %d\n", name, value);
 }
 
-/*void asm_const_char(const char *name, char *value) {
-  int mode = 1, lastmode = 1;
-  // 1: bare (unquoted character ids)
-  // 0: quoted string literal
-  printf("%s: ", name);
-  while (*value) {
-    lastmode = mode;
-    if (*value >= 32 && *value < 127) {
-      mode = 0;
-    } else {
-      mode = 1;
-    }
-
-    if (mode != lastmode) {
-      if (mode == 1) {
-	printf(", \"");
-      } else if (mode == 0) {
-	printf("\", ");
-      }
-    } else {
-      if (mode == 1) {
-	printf(", ");
-      }
-    }
-
-    if (*value == '"') {
-      printf("\\\"");
-    } else if (*value >= 32 && *value < 127) {
-      printf("%c", *value);
-    } else {
-      printf(
-      }*/
-
 void asm_literal_int(int num) {
   statement_push_int(cur_stmt, num);
 }
@@ -396,44 +359,6 @@ void type_check(enum yytokentype a, enum yytokentype b) {
   }
 }
 
-void asm_func_call(const char *name, int nargs, int nrets) {
-  int i;
-  const char *reg;
-  for (i=0; i < nargs; i++) {
-    switch(i) {
-    case 0:
-      reg = "rdi";
-      break;
-    case 1:
-      reg = "rsi";
-      break;
-    case 2:
-      reg = "rdx";
-      break;
-    case 3:
-      reg = "rcx";
-      break;
-    case 4:
-      reg = "r8";
-      break;
-    case 5:
-      reg = "r9";
-      break;
-    default:
-      reg = NULL;
-      break;
-    }
-    if (reg != NULL) {
-      printf("    pop %s ; load argument %s(#%d)\n",
-	     reg, name, i);
-    } // otherwise just leave it on the stack
-  }
-  printf("    call %s ; call function %s\n", name, name);
-  if (nrets) {
-    printf("    push rax ; save return value on stack\n");
-  }
-}
-
 void asm_func_return_regval(const char *reg) {
   if (strcmp(reg, "rax")) {
     printf("    mov rax, %s ; return_regval(%s)\n", reg, reg);
@@ -442,13 +367,6 @@ void asm_func_return_regval(const char *reg) {
 
 void asm_func_return_const(int val) {
   printf("    mov rax, QWORD %d ; return_const(%d)\n", val, val);
-}
-
-void call_printf() {
-  printf("    mov rdi, fmt_decimal_nl\n"
-	 "    pop rsi\n"
-	 "    mov al, 0\n"
-	 "    call printf\n");
 }
 
 void yyerror(const char *msg)
