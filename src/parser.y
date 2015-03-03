@@ -103,11 +103,17 @@ PRINT expr {
 ;
 
 declare:
+// TODO combine these somehow
 INTTYPE ID {
   struct SymbolType st;
   struct StorageLocation sl;
+
+  if (block_resolve_symbol(cur_scope, $2) != NULL) {
+    fprintf(stderr, "Symbol %s:\n", $2);
+    yyerror("Double declaration invalid");
+  }
+
   st.type = PRIMITIVE;
-  //printf("st.value.primitive = %d\n", INTTYPE);
   st.value.primitive = INTTYPE;
 
   sl.type = LABEL;
@@ -117,6 +123,12 @@ INTTYPE ID {
 | FLOATTYPE ID {
   struct SymbolType st;
   struct StorageLocation sl;
+
+  if (block_resolve_symbol(cur_scope, $2) != NULL) {
+    fprintf(stderr, "Symbol %s:\n", $2);
+    yyerror("Double declaration invalid");
+  }
+
   sl.type = PRIMITIVE;
   st.value.primitive = FLOATTYPE;
 
