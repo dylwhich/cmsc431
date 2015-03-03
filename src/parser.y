@@ -18,19 +18,20 @@ int yylex();
 
 /* Our functions */
  void asm_start();
- void asm_literal(int);
+ void asm_literal_int(int);
+ void asm_literal_float(double);
  void asm_func_header(const char*);
  void asm_func_footer();
  void asm_func_call(const char*, int, int);
  void call_printf();
- void oper_add();
- void oper_sub();
- void oper_mul();
- void oper_div();
- void oper_neg();
- void oper_mod();
- void oper_pow();
- void type_check(enum yytokentype a, enum yytokentype b);
+ void oper_add(enum yytokentype);
+ void oper_sub(enum yytokentype);
+ void oper_mul(enum yytokentype);
+ void oper_div(enum yytokentype);
+ void oper_neg(enum yytokentype);
+ void oper_mod(enum yytokentype);
+ void oper_pow(enum yytokentype);
+ void type_check(enum yytokentype, enum yytokentype);
 %}
 
 /* yylval union type */
@@ -151,7 +152,8 @@ ID '=' expr {
 ;
 
 expr:
-INTEGER           { asm_literal($1); $$ = INTTYPE; }
+INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
+| FLOAT           { asm_literal_float($1); $$ = FLOATTYPE; }
 | ID {
   char ref[64];
   char inst[80];
@@ -169,13 +171,13 @@ INTEGER           { asm_literal($1); $$ = INTTYPE; }
   }
   $$ = block_resolve_symbol(cur_scope, $1)->type.value.primitive;
 }
-| expr '+' expr   { type_check($1, $3); $$ = $3; oper_add(); }
-| expr '-' expr   { type_check($1, $3); $$ = $3; oper_sub(); }
-| expr '*' expr   { type_check($1, $3); $$ = $3; oper_mul(); }
-| expr '/' expr   { type_check($1, $3); $$ = $3; oper_div(); }
-| expr '%' expr   { type_check($1, $3); $$ = $3; oper_mod(); }
-| '-' expr        { $$ = $2; oper_neg(); }
-| expr POW expr   { type_check($1, $3); $$ = $3; oper_pow(); }
+| expr '+' expr   { type_check($1, $3); $$ = $3; oper_add($$); }
+| expr '-' expr   { type_check($1, $3); $$ = $3; oper_sub($$); }
+| expr '*' expr   { type_check($1, $3); $$ = $3; oper_mul($$); }
+| expr '/' expr   { type_check($1, $3); $$ = $3; oper_div($$); }
+| expr '%' expr   { type_check($1, $3); $$ = $3; oper_mod($$); }
+| '-' expr        { $$ = $2; oper_neg($$); }
+| expr POW expr   { type_check($1, $3); $$ = $3; oper_pow($$); }
 | '(' expr ')'    { $$ = $2; }
 ;
 
@@ -229,10 +231,26 @@ void asm_const_int(const char *name, int value) {
       printf(
       }*/
 
-void asm_literal(int num) {
+void asm_literal_int(int num) {
   char tmp[32];
   sprintf(tmp, "push QWORD %d", num);
   statement_append_instruction(cur_stmt, tmp);
+}
+
+void asm_literal_float(double num) {
+  char tmp[64], tmp2[64];
+  struct Symbol *symbol;
+
+  sprintf(tmp, "%lf", num);
+
+  block_get_unique_name(cur_scope, tmp2);
+  symbol = block_add_symbol_initialized(cur_scope, tmp2, FLOATTYPE, tmp);
+
+  symbol_get_reference(symbol, tmp2);
+  sprintf(tmp, "mov rax, %s", tmp2);
+
+  statement_append_instruction(cur_stmt, tmp);
+  statement_append_instruction(cur_stmt, "push rax");
 }
 
 // This will generate a function header for a function that takes n args
@@ -251,31 +269,31 @@ void asm_func_footer() {
 	 "    ret\n");
 }
 
-void oper_add() {
+void oper_add(enum yytokentype type) {
   statement_append_instruction(cur_stmt, "pop rax\nadd [rsp], rax");
 }
 
-void oper_mul() {
+void oper_mul(enum yytokentype type) {
   statement_append_instruction(cur_stmt, "pop rax\nimul rax, [rsp]\nmov [rsp], rax");
 }
 
-void oper_sub() {
+void oper_sub(enum yytokentype type) {
   statement_append_instruction(cur_stmt, "pop rax\nsub [rsp], rax");
 }
 
-void oper_div() {
+void oper_div(enum yytokentype type) {
   statement_append_instruction(cur_stmt, "pop rcx\npop rax\ncqo\nidiv QWORD rcx\npush QWORD rax");
 }
 
-void oper_neg() {
+void oper_neg(enum yytokentype type) {
   statement_append_instruction(cur_stmt, "neg QWORD [rsp]");
 }
 
-void oper_mod() {
+void oper_mod(enum yytokentype type) {
   statement_append_instruction(cur_stmt, "pop rcx\npop rax\ncqo\nidiv QWORD rcx\npush QWORD rbx");
 }
 
-void oper_pow() {
+void oper_pow(enum yytokentype type) {
   statement_append_instruction(cur_stmt, "pop rdi\npop rsi\ncall intpow\npush rax");
 }
 
