@@ -85,21 +85,25 @@ expr
 
 print_stmt:
 PRINT expr {
-  statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp]");
   switch ($2) {
   case INTTYPE:
+    statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_decimal_nl");
+    statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   case FLOATTYPE:
+    statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov al, 1");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_float_nl");
+    statement_append_instruction(cur_stmt, "push rax"); // 16-byte align
     break;
   default:
     printf("; I DON'T KNOW %d\n", $2);
     break;
   }
-  statement_append_instruction(cur_stmt,
-			       "mov al, 0\n"
-			       "call printf");
+  statement_append_instruction(cur_stmt, "call printf");
+  if ($2 == FLOATTYPE)
+    statement_append_instruction(cur_stmt, "pop rax");
 }
 
 ;
