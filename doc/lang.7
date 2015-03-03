@@ -1,12 +1,12 @@
-.TH Uncode 7 "January 2015" "CMSC 431" "User Manuals"
+.TH Uncode 7 "March 2015" "CMSC 431" "User Manuals"
 .
 .SH NAME
 Uncode \- A language created for the Compilers class
 .
 .SH DESCRIPTION
-This language resembles a simplified version of C. This language is compiled
-to the x86_64 assembly language with the 
-.B Proj1
+This language resembles something close to Python 2. This language is
+compiled to the x86_64 assembly language with the
+.B Proj2
 compiler, from which an executable program can be assembled and linked using
 .BR nasm (1)
 and 
@@ -14,20 +14,23 @@ and
 respectively.
 
 .P 
-The language operates as a calculator supporting basic integer 
-mathematic operations. 
+The language supports basic integer and floating-point arithmetic, as well
+as variables of each type, and print statements.
 .
 .SH LANGUAGE
 .SS Mathematical Operations
-The following mathematical operations are supported in decreasing order of 
-precedence. Expressions may be constructed from signed 64 bit integers, or
-other mathematical expressions.
+The following mathematical operations are supported in decreasing
+order of precedence. Expressions may be constructed from signed 64 bit
+integers, double-precision floating-points, or other mathematical
+expressions. Integers and floating-points may not be mixed in the same
+expression.
 .TP
 (expression)
 Parentheses. Override precedence of operators outside the parentheses. 
 .TP
 expression ** expression
-Integer exponentiation. Returns 1 if exponent is less than 1. 
+For integers, performs basic integer exponentiation and returns 1 if
+exponent is less than 1. For floats, performs C's pow function.
 .TP
 -expression
 Negation. 
@@ -46,6 +49,32 @@ Addition. Same precedence as subtraction.
 .TP
 expression - expression
 Subtraction. Same precedence as addition.
+.
+.SS Variables
+The language supports an arbitrary number of integer and
+floating-point variables. They must be declared and initialized before
+they can be used.  The value of a variable undefined until it has been
+assigned to at least once. A valid variable identifier is within 1 and
+63 characters long, contains only alphanumeric characters and the
+underscore, and does not begin with a number.
+.TP
+int name
+Declares an integer variable with the specified name.
+.TP
+float name
+Declares a floating-point variable with the specified name.
+.
+.SS Print Statements
+The language supports two kinds of print statements: one which prints
+a trailing newline and one which does not.
+.TP
+print stmt
+Prints stmt without a trailing newline. The statement may be an integer
+or a floating-point expression.
+.TP
+printl stmt
+Prints stmt with a trailing newline. The statement may be an integer or
+a floating-point expression
 .
 .SH LIMITATIONS
 .IP \(bu
