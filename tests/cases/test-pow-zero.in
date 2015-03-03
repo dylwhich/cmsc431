@@ -1,1 +1,1 @@
-print 64 ** 0
+printl 64 ** 0

@@ -2,6 +2,6 @@ int a
 int b
 a = 7
 b = 6
-print a
-print b
-print 1337
+printl a
+printl b
+printl 1337
