@@ -95,17 +95,15 @@ PRINT expr {
     statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov al, 1");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_float_nl");
-    statement_append_instruction(cur_stmt, "push rax"); // 16-byte align
     break;
   default:
     printf("; I DON'T KNOW %d\n", $2);
     break;
   }
+  statement_stack_align(cur_stmt);
   statement_append_instruction(cur_stmt, "call printf");
-  if ($2 == FLOATTYPE)
-    statement_append_instruction(cur_stmt, "pop rax");
+  statement_stack_reset(cur_stmt);
 }
-
 ;
 
 declare:
@@ -147,7 +145,7 @@ ID '=' expr {
 	symbol_get_reference(target, ref);
 	printf("; reference to %s is %s\n", target->label, ref);
 	sprintf(inst, "mov %s, rax; %s = <stmt>", ref, target->label);
-	statement_append_instruction(cur_stmt, "pop QWORD rax");
+	statement_pop(cur_stmt, RAX);
 	statement_append_instruction(cur_stmt, inst);
       }
     }
@@ -170,7 +168,7 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
       printf("; reference to %s is %s\n", target->label, ref);
       sprintf(inst, "mov rax, %s; deref %s", ref, target->label);
       statement_append_instruction(cur_stmt, inst);
-      statement_append_instruction(cur_stmt, "push QWORD rax");
+      statement_push(cur_stmt, RAX);
     }
   }
   $$ = block_resolve_symbol(cur_scope, $1)->type.value.primitive;
@@ -236,9 +234,7 @@ void asm_const_int(const char *name, int value) {
       }*/
 
 void asm_literal_int(int num) {
-  char tmp[32];
-  sprintf(tmp, "push QWORD %d", num);
-  statement_append_instruction(cur_stmt, tmp);
+  statement_push_int(cur_stmt, num);
 }
 
 void asm_literal_float(double num) {
@@ -254,37 +250,25 @@ void asm_literal_float(double num) {
   sprintf(tmp, "mov rax, %s", tmp2);
 
   statement_append_instruction(cur_stmt, tmp);
-  statement_append_instruction(cur_stmt, "push rax");
-}
-
-// This will generate a function header for a function that takes n args
-// in the future, they will also get a type
-// and also will somehow translate their names to registers / addresses
-void asm_func_header(const char *name) {
-  printf("%s:\n"
-	 "    push rbp\n"
-	 "    mov rbp, rsp\n",
-	 name);
-}
-
-void asm_func_footer() {
-  printf("    mov rsp, rbp\n"
-	 "    pop rbp\n"
-	 "    ret\n");
+  statement_push(cur_stmt, RAX);
 }
 
 void oper_add(enum yytokentype type) {
   switch (type) {
   case INTTYPE:
-    statement_append_instruction(cur_stmt, "pop rax\nadd [rsp], rax");
+    statement_pop(cur_stmt, RAX);
+    statement_append_instruction(cur_stmt, "add [rsp], rax");
     break;
   case FLOATTYPE:
     statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
-    statement_append_instruction(cur_stmt, "fld QWORD [rsp+8]"); // stack alignment crap
+    statement_pop(cur_stmt, RAX);
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+
+    statement_stack_align(cur_stmt);
     statement_append_instruction(cur_stmt, "faddp st1");
-    statement_append_instruction(cur_stmt, "fstp QWORD [rsp+8]");
-    //statement_append_instruction(cur_stmt, "fstpl QWORD [rsp+8]");
-    statement_append_instruction(cur_stmt, "pop rax");
+    statement_stack_reset(cur_stmt);
+
+    statement_append_instruction(cur_stmt, "fstp QWORD [rsp]");
     break;
   }
 }
@@ -292,14 +276,20 @@ void oper_add(enum yytokentype type) {
 void oper_mul(enum yytokentype type) {
   switch(type) {
   case INTTYPE:
-    statement_append_instruction(cur_stmt, "pop rax\nimul rax, [rsp]\nmov [rsp], rax");
+    statement_pop(cur_stmt, RAX);
+    statement_append_instruction(cur_stmt,"imul rax, [rsp]\n"
+				 "mov [rsp], rax");
     break;
   case FLOATTYPE:
     statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
-    statement_append_instruction(cur_stmt, "fld QWORD [rsp+8]"); // stack alignment crap
+    statement_pop(cur_stmt, RAX);
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+
+    statement_stack_align(cur_stmt);
     statement_append_instruction(cur_stmt, "fmulp st1");
-    statement_append_instruction(cur_stmt, "fstp QWORD [rsp+8]");
-    statement_append_instruction(cur_stmt, "pop rax");
+    statement_stack_reset(cur_stmt);
+
+    statement_append_instruction(cur_stmt, "fstp QWORD [rsp]");
     break;
   }
 }
@@ -307,14 +297,18 @@ void oper_mul(enum yytokentype type) {
 void oper_sub(enum yytokentype type) {
   switch(type) {
   case INTTYPE:
-    statement_append_instruction(cur_stmt, "pop rax\nsub [rsp], rax");
+    statement_pop(cur_stmt, RAX);
+    statement_append_instruction(cur_stmt, "sub [rsp], rax");
     break;
   case FLOATTYPE:
     statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
-    statement_append_instruction(cur_stmt, "fld QWORD [rsp+8]"); // stack alignment crap
+    statement_pop(cur_stmt, RAX);
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+    statement_stack_align(cur_stmt);
     statement_append_instruction(cur_stmt, "fsubrp st1");
-    statement_append_instruction(cur_stmt, "fstp QWORD [rsp+8]");
-    statement_append_instruction(cur_stmt, "pop rax");
+    statement_stack_reset(cur_stmt);
+
+    statement_append_instruction(cur_stmt, "fstp QWORD [rsp]");
     break;
   }
 }
@@ -322,14 +316,20 @@ void oper_sub(enum yytokentype type) {
 void oper_div(enum yytokentype type) {
   switch(type) {
   case INTTYPE:
-    statement_append_instruction(cur_stmt, "pop rcx\npop rax\ncqo\nidiv QWORD rcx\npush QWORD rax");
+    statement_pop(cur_stmt, RCX);
+    statement_pop(cur_stmt, RAX);
+    statement_append_instruction(cur_stmt, "cqo\n"
+				 "idiv QWORD rcx");
+    statement_push(cur_stmt, RAX);
     break;
   case FLOATTYPE:
     statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
-    statement_append_instruction(cur_stmt, "fld QWORD [rsp+8]"); // stack alignment crap
+    statement_pop(cur_stmt, RAX);
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+    statement_stack_align(cur_stmt);
     statement_append_instruction(cur_stmt, "fdivrp");
-    statement_append_instruction(cur_stmt, "fstp QWORD [rsp+8]");
-    statement_append_instruction(cur_stmt, "pop rax");
+    statement_stack_reset(cur_stmt);
+    statement_append_instruction(cur_stmt, "fstp QWORD [rsp]");
     break;
   }
 }
@@ -350,14 +350,20 @@ void oper_neg(enum yytokentype type) {
 void oper_mod(enum yytokentype type) {
   switch(type) {
   case INTTYPE:
-    statement_append_instruction(cur_stmt, "pop rcx\npop rax\ncqo\nidiv QWORD rcx\npush QWORD rbx");
+    statement_pop(cur_stmt, RCX);
+    statement_pop(cur_stmt, RAX);
+    statement_append_instruction(cur_stmt, "cqo\n"
+				 "idiv QWORD rcx");
+    statement_push(cur_stmt, RBX);
     break;
   case FLOATTYPE:
     statement_append_instruction(cur_stmt, "movlps xmm1, QWORD [rsp]");
-    statement_append_instruction(cur_stmt, "pop rax");
+    statement_pop(cur_stmt, RAX);
     statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov al, 2");
+    statement_stack_align(cur_stmt);
     statement_append_instruction(cur_stmt, "call fmod");
+    statement_stack_reset(cur_stmt);
     statement_append_instruction(cur_stmt, "movlps QWORD [rsp], xmm0");
     break;
   }
@@ -366,14 +372,19 @@ void oper_mod(enum yytokentype type) {
 void oper_pow(enum yytokentype type) {
   switch(type) {
   case INTTYPE:
-    statement_append_instruction(cur_stmt, "pop rdi\npop rsi\ncall intpow\npush rax");
+    statement_pop(cur_stmt, RDI);
+    statement_pop(cur_stmt, RSI);
+    statement_append_instruction(cur_stmt, "call intpow");
+    statement_push(cur_stmt, RAX);
     break;
   case FLOATTYPE:
     statement_append_instruction(cur_stmt, "movlps xmm1, QWORD [rsp]");
-    statement_append_instruction(cur_stmt, "pop rax");
+    statement_pop(cur_stmt, RAX);
     statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov al, 2");
+    statement_stack_align(cur_stmt);
     statement_append_instruction(cur_stmt, "call pow");
+    statement_stack_reset(cur_stmt);
     statement_append_instruction(cur_stmt, "movlps QWORD [rsp], xmm0");
     break;
   }

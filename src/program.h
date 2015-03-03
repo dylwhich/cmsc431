@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #define SYMBOL_MAX_LENGTH 64
+#define STACK_ALIGNMENT 16
 
 enum StorageLocationType {
   LABEL,
@@ -62,6 +63,8 @@ struct Symbol {
 struct Statement {
   long buffer_size;
   char *buffer;
+  long realignment;
+  struct Block *parent;
 };
 
 struct GlobalData {
@@ -69,6 +72,7 @@ struct GlobalData {
   long next_bss_offset;
   char *data_label;
   long next_data_offset;
+  long stack_size;
 };
 
 enum SubBlockType {
@@ -128,6 +132,10 @@ void __block_grow_children(struct Block *this);
 void statement_init(struct Statement *this, struct Block *parent);
 void statement_append_instruction(struct Statement *this,
 				  const char *asm_instruction);
+void statement_push(struct Statement *this, enum Register regname);
+void statement_pop(struct Statement *this, enum Register regname);
+void statement_stack_align(struct Statement *this);
+void statement_stack_reset(struct Statement *this);
 void statement_write(struct Statement *this, FILE *out);
 void statement_destroy(struct Statement *this);
 
@@ -136,5 +144,8 @@ void symbol_init(struct Symbol *this, struct SymbolType type, long offset,
 void symbol_write_declaration(struct Symbol *this, FILE *out);
 void symbol_write_reference(struct Symbol *this, FILE *out);
 void symbol_get_reference(struct Symbol *this, char *out);
+
+void register_write_name(enum Register regname, FILE *out);
+void register_get_name(enum Register regname, char *out);
 
 #endif

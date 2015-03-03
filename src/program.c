@@ -29,6 +29,8 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
     this->global_data->next_data_offset = 0;
     this->global_data->data_label = malloc(12 * sizeof(char));
     strcpy(this->global_data->data_label, "initglobals");
+
+    this->global_data->stack_size = 0;
   } else {
     this->global_data = parent->global_data;
   }
@@ -275,6 +277,8 @@ void statement_init(struct Statement *this, struct Block *parent) {
   // TODO don't hardcode
   this->buffer_size = 512;
   this->buffer = (char*) calloc(this->buffer_size, sizeof(char));
+  this->realignment = 0;
+  this->parent = parent;
 }
 
 void statement_append_instruction(struct Statement *this, const char *asm_instruction) {
@@ -295,6 +299,51 @@ void statement_append_instruction(struct Statement *this, const char *asm_instru
   strncpy(this->buffer + actual_len, asm_instruction, input_len);
   this->buffer[actual_len + input_len] = '\n';
   this->buffer[actual_len + input_len + 1] = '\0';
+}
+
+void statement_push(struct Statement *this, enum Register regname) {
+  char reg[8], inst[64];
+  register_get_name(regname, reg);
+  sprintf(inst, "push QWORD %s", reg);
+  statement_append_instruction(this, inst);
+  this->parent->global_data->stack_size += 8;
+}
+
+void statement_pop(struct Statement *this, enum Register regname) {
+  char reg[8], inst[64];
+  register_get_name(regname, reg);
+  sprintf(inst, "pop QWORD %s", reg);
+  statement_append_instruction(this, inst);
+  this->parent->global_data->stack_size -= 8;
+}
+
+void statement_push_int(struct Statement *this, long val) {
+  char inst[64];
+  sprintf(inst, "push QWORD %d", val);
+  statement_append_instruction(this, inst);
+  this->parent->global_data->stack_size += 8;
+}
+
+void statement_stack_align(struct Statement *this) {
+  char instr[32];
+  long alignment = this->parent->global_data->stack_size % STACK_ALIGNMENT;
+
+  if (alignment) {
+    sprintf(instr, "add rsp, %ld; REALIGN", alignment);
+    statement_append_instruction(this, instr);
+    this->parent->global_data->stack_size += alignment;
+    this->realignment = alignment;
+  }
+}
+
+void statement_stack_reset(struct Statement *this) {
+  char instr[32];
+  if (this->realignment) {
+    sprintf(instr, "sub rsp, %ld; DEALIGN", this->realignment);
+    statement_append_instruction(this, instr);
+    this->parent->global_data->stack_size -= this->realignment;
+    this->realignment = 0;
+  }
 }
 
 void statement_write(struct Statement *this, FILE *out) {
@@ -366,6 +415,70 @@ void register_write_name(enum Register regname, FILE *out) {
 
   default:
     fprintf(out, "[YOU BROKE SOMETHING]");
+    break;
+  }
+}
+
+void register_get_name(enum Register regname, char *out) {
+  switch(regname) {
+  case RAX:
+    sprintf(out, "rax");
+    break;
+
+  case RBX:
+    sprintf(out, "rbx");
+    break;
+
+  case RCX:
+    sprintf(out, "rcx");
+    break;
+
+  case RDX:
+    sprintf(out, "rdx");
+    break;
+
+  case RSI:
+    sprintf(out, "rsi");
+    break;
+
+  case RDI:
+    sprintf(out, "rdi");
+    break;
+
+  case R8:
+    sprintf(out, "r8");
+    break;
+
+  case R9:
+    sprintf(out, "r9");
+    break;
+
+  case R10:
+    sprintf(out, "r10");
+    break;
+
+  case R11:
+    sprintf(out, "r11");
+    break;
+
+  case R12:
+    sprintf(out, "r12");
+    break;
+
+  case R13:
+    sprintf(out, "r13");
+    break;
+
+  case R14:
+    sprintf(out, "r14");
+    break;
+
+  case R15:
+    sprintf(out, "r15");
+    break;
+
+  default:
+    sprintf(out, "[YOU BROKE SOMETHING]");
     break;
   }
 }
@@ -443,9 +556,9 @@ void symbol_get_reference(struct Symbol *this, char *out) {
     sprintf(out, "qword [%ld]", this->location.value.address);
     break;
 
-    //case REGISTER:
-    //register_write_name(this->location.value.regname, out);
-    //break;
+  case REGISTER:
+    register_get_name(this->location.value.regname, out);
+    break;
 
   case INITIALIZED:
     sprintf(out, "qword [%s+%ld]", this->scope->global_data->data_label, this->offset);
