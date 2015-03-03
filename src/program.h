@@ -13,6 +13,7 @@
 enum StorageLocationType {
   LABEL,
   ADDRESS,
+  INITIALIZED,
   REGISTER
 };
 
@@ -53,6 +54,7 @@ struct Symbol {
   size_t size;
   struct Block *scope;
   char label[64];
+  char initval[64];
   struct StorageLocation location;
   UT_hash_handle hh;
 };
@@ -63,6 +65,8 @@ struct Statement {
 };
 
 struct GlobalData {
+  char *bss_label;
+  long next_bss_offset;
   char *data_label;
   long next_data_offset;
 };
@@ -106,9 +110,13 @@ bool block_is_global(struct Block *this);
 struct Block *block_add_child(struct Block *this);
 struct Block *block_add_named_child(struct Block *this, const char *name);
 struct Statement *block_add_statement(struct Block *this);
+void block_get_unique_name(struct Block *this, char *out);
 struct Symbol *block_add_symbol(struct Block *this, const char *name,
 				struct SymbolType type,
 				struct StorageLocation location);
+struct Symbol *block_add_symbol_initialized(struct Block *this, const char *name,
+					    enum yytokentype type,
+					    const char *initial_value);
 struct Symbol *block_resolve_symbol(struct Block *this, const char *name);
 
 

@@ -22,6 +22,10 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
   // Keep the global data in sync with all the blocks
   if (block_is_global(this)) {
     this->global_data = malloc(sizeof(struct GlobalData));
+    this->global_data->next_bss_offset = 0;
+    this->global_data->bss_label = malloc(12 * sizeof(char));
+    strcpy(this->global_data->bss_label, "initglobals");
+
     this->global_data->next_data_offset = 0;
     this->global_data->data_label = malloc(8 * sizeof(char));
     strcpy(this->global_data->data_label, "globals");
@@ -50,12 +54,21 @@ void block_write_head(struct Block *this, FILE *out) {
     fprintf(out, "fmt_float_nl:\n    db \"%%.4f\", 10, 0\n\n");
     fprintf(out, "fmt_float:\n    db \"%%.4f\", 0\n\n");
     // END HACK
-    fprintf(out, "SECTION .bss\n");
     fprintf(out, "%s: \n", this->global_data->data_label);
+
+    for (symbol=this->symbol_table; symbol != NULL; symbol = symbol->hh.next) {
+      if (symbol->location.type == INITIALIZED) {
+	symbol_write_declaration(symbol, out);
+      }
+    }
+    fprintf(out, "SECTION .bss\n");
+    fprintf(out, "%s: \n", this->global_data->bss_label);
   }
 
   for (symbol=this->symbol_table; symbol != NULL; symbol = symbol->hh.next) {
-    symbol_write_declaration(symbol, out);
+    if (symbol->location.type != INITIALIZED) {
+      symbol_write_declaration(symbol, out);
+    }
   }
 
   for (child = this->children; child < (this->children + this->num_children); child++) {
@@ -162,16 +175,36 @@ struct Statement *block_add_statement(struct Block *this) {
   return &(this->children[this->num_children++].value.statement);
 }
 
+void block_get_unique_name(struct Block *this, char *out) {
+  sprintf(out, "0_%d", (this->global_data->next_bss_offset + this->global_data->next_data_offset) / 8);
+}
+
 struct Symbol *block_add_symbol(struct Block *this, const char *name, struct SymbolType type, struct StorageLocation location) {
   struct Symbol *symbol = (struct Symbol*)malloc(sizeof(struct Symbol));
 
   // TODO: don't use a constant size for the symbol table...
-  symbol_init(symbol, type, this->global_data->next_data_offset, 8, this, name);
-  this->global_data->next_data_offset += 8;
+  symbol_init(symbol, type, this->global_data->next_bss_offset, 8, this, name);
+  this->global_data->next_bss_offset += 8;
 
   HASH_ADD_STR(this->symbol_table, label, symbol);
   return symbol;
 }
+
+struct Symbol *block_add_symbol_initialized(struct Block *this, const char *name, enum yytokentype type, const char *initial_value) {
+  struct Symbol *symbol = (struct Symbol*)malloc(sizeof(struct Symbol));
+  struct SymbolType st;
+  st.type = PRIMITIVE;
+  st.value.primitive = type;
+
+  // TODO: don't hardcode
+  symbol_init(symbol, st, this->global_data->next_data_offset, 8, this, name);
+  this->global_data->next_data_offset += 8;
+
+  strncpy(symbol->initval, initial_value, sizeof(symbol->initval));
+
+  HASH_ADD_STR(this->symbol_table, label, symbol);
+  return symbol;
+};
 
 struct Symbol *block_resolve_symbol(struct Block *this, const char *name) {
   struct Symbol *result = NULL;
@@ -214,6 +247,7 @@ void block_destroy(struct Block *this) {
   this->children = NULL;
 
   if (block_is_global(this)) {
+    free(this->global_data->bss_label);
     free(this->global_data->data_label);
     free(this->global_data);
     this->global_data = NULL;
@@ -359,6 +393,10 @@ void symbol_write_declaration(struct Symbol *this, FILE *out) {
     // I'm pretty sure we don't have to do anything here
     break;
 
+  case INITIALIZED:
+    fprintf(out, "    dq %s\n", this->initval);
+    break;
+
   default:
     fprintf(out, ";;;;;\n;;;;;\n;     ADD SUPPORT FOR THE NEW VARIABLE LOCATION, DOOFUS\n;;;;;\n;;;;;\n");
     break;
@@ -371,7 +409,7 @@ void symbol_write_reference(struct Symbol *this, FILE *out) {
   // symbol_write_reference...
   switch(this->location.type) {
   case LABEL:
-    fprintf(out, "qword [%s+%ld]", this->scope->global_data->data_label, this->offset);
+    fprintf(out, "qword [%s+%ld]", this->scope->global_data->bss_label, this->offset);
     break;
 
   case ADDRESS:
@@ -380,6 +418,10 @@ void symbol_write_reference(struct Symbol *this, FILE *out) {
 
   case REGISTER:
     register_write_name(this->location.value.regname, out);
+    break;
+
+  case INITIALIZED:
+    fprintf(out, "qword [%s+%ld", this->scope->global_data->data_label, this->offset);
     break;
   }
 }
@@ -390,7 +432,7 @@ void symbol_get_reference(struct Symbol *this, char *out) {
   // symbol_write_reference...
   switch(this->location.type) {
   case LABEL:
-    sprintf(out, "qword [%s+%ld]", this->scope->global_data->data_label, this->offset);
+    sprintf(out, "qword [%s+%ld]", this->scope->global_data->bss_label, this->offset);
     break;
 
   case ADDRESS:
@@ -400,5 +442,9 @@ void symbol_get_reference(struct Symbol *this, char *out) {
     //case REGISTER:
     //register_write_name(this->location.value.regname, out);
     //break;
+
+  case INITIALIZED:
+    sprintf(out, "qword [%s+%ld]", this->scope->global_data->data_label, this->offset);
+    break;
   }
 }
