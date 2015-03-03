@@ -82,8 +82,7 @@ expr
 ;
 
 print_stmt:
-}
-| PRINT expr {
+PRINT expr {
   statement_append_instruction(cur_stmt,
 			       "mov rsi, QWORD [rsp]\n"
 			       "mov rdi, fmt_decimal_nl\n"
