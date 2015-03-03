@@ -8,8 +8,14 @@
 
 [[:digit:]]+ {
     /* Integers */
-    yylval.longval = atof(yytext);
+    yylval.longval = atol(yytext);
     return INTEGER;
+}
+
+[[:digit:]]*[.][[:digit:]]+ {
+    /* Floats */
+    yylval.floatval = atof(yytext);
+    return FLOAT;
 }
 
 "**" {

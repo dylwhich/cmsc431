@@ -37,7 +37,7 @@ int yylex();
 /* yylval union type */
 %union {
   long longval;
-  float floatval;
+  double floatval;
   char idval[64];
 }
 
