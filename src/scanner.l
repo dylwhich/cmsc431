@@ -23,6 +23,11 @@
     return POW;
 }
 
+"printl" {
+    /* Print-line statement */
+    return PRINTL;
+}
+
 "print" {
     /* Print statement */
     return PRINT;

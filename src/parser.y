@@ -42,6 +42,7 @@ int yylex();
 %token <floatval> FLOAT
 %token <idval> ID
 %token PRINT
+%token PRINTL
 %token <longval> INTTYPE
 %token <floatval> FLOATTYPE
 
@@ -80,7 +81,7 @@ expr
 ;
 
 print_stmt:
-PRINT expr {
+PRINTL expr {
   switch ($2) {
   case INTTYPE:
     statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp]");
@@ -91,6 +92,26 @@ PRINT expr {
     statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov al, 1");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_float_nl");
+    break;
+  default:
+    printf("; I DON'T KNOW %d\n", $2);
+    break;
+  }
+  statement_stack_align(cur_stmt);
+  statement_append_instruction(cur_stmt, "call printf");
+  statement_stack_reset(cur_stmt);
+}
+| PRINT expr {
+  switch ($2) {
+  case INTTYPE:
+    statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov rdi, fmt_decimal");
+    statement_append_instruction(cur_stmt, "mov al, 0");
+    break;
+  case FLOATTYPE:
+    statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov al, 1");
+    statement_append_instruction(cur_stmt, "mov rdi, fmt_float");
     break;
   default:
     printf("; I DON'T KNOW %d\n", $2);
