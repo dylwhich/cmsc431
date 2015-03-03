@@ -82,18 +82,6 @@ expr
 ;
 
 print_stmt:
-PRINT ID {
-  char ref[64];
-  char inst[80];
-
-  symbol_get_reference(block_resolve_symbol(cur_scope, $2), ref);
-  sprintf(inst, "mov rsi, %s", ref);
-
-  statement_append_instruction(cur_stmt, inst);
-  statement_append_instruction(cur_stmt,
-			       "mov rdi, fmt_decimal_nl\n"
-			       "mov al, 0\n"
-			       "call printf");
 }
 | PRINT expr {
   statement_append_instruction(cur_stmt,
