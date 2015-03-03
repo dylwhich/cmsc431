@@ -233,7 +233,7 @@ void __block_grow_children(struct Block *this) {
 void statement_init(struct Statement *this, struct Block *parent) {
   // TODO don't hardcode
   this->buffer_size = 512;
-  this->buffer = (char*) malloc(sizeof(char) * this->buffer_size);
+  this->buffer = (char*) calloc(this->buffer_size, sizeof(char));
 }
 
 void statement_append_instruction(struct Statement *this, const char *asm_instruction) {
