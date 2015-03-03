@@ -143,6 +143,20 @@ ID '=' expr {
 expr:
 INTEGER           { asm_literal($1); $$ = INTTYPE; }
 | ID {
+  char ref[64];
+  char inst[80];
+  struct Symbol *target = block_resolve_symbol(cur_scope, $1);
+  if (target == NULL) {
+    yyerror("Unknown identifier");
+  } else {
+    if (target->type.type == PRIMITIVE) {
+      symbol_get_reference(target, ref);
+      printf("; reference to %s is %s\n", target->label, ref);
+      sprintf(inst, "mov rax, %s; deref %s", ref, target->label);
+      statement_append_instruction(cur_stmt, inst);
+      statement_append_instruction(cur_stmt, "push QWORD rax");
+    }
+  }
   $$ = block_resolve_symbol(cur_scope, $1)->type.value.primitive;
 }
 | expr '+' expr   { oper_add(); }
