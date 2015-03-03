@@ -47,7 +47,9 @@ void block_write_head(struct Block *this, FILE *out) {
   if (block_is_global(this)) {
     // BEGIN HACK
     // TODO make something for declaring constant globals here
-    fprintf(out, "extern printf\n\n");
+    fprintf(out, "extern printf\n");
+    fprintf(out, "extern pow\n");
+    fprintf(out, "extern fmod\n\n");
     fprintf(out, "SECTION .data\n");
     fprintf(out, "fmt_decimal_nl:\n    db \"%%ld\", 10, 0\n\n");
     fprintf(out, "fmt_decimal:\n    db \"%%ld\", 0\n\n");

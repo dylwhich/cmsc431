@@ -281,35 +281,102 @@ void oper_add(enum yytokentype type) {
   case FLOATTYPE:
     statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
     statement_append_instruction(cur_stmt, "fld QWORD [rsp+8]"); // stack alignment crap
-    statement_append_instruction(cur_stmt, "fadd st0, st1");
-    statement_append_instruction(cur_stmt, "fst QWORD [rsp+8]");
+    statement_append_instruction(cur_stmt, "faddp st1");
+    statement_append_instruction(cur_stmt, "fstp QWORD [rsp+8]");
+    //statement_append_instruction(cur_stmt, "fstpl QWORD [rsp+8]");
     statement_append_instruction(cur_stmt, "pop rax");
     break;
   }
 }
 
 void oper_mul(enum yytokentype type) {
-  statement_append_instruction(cur_stmt, "pop rax\nimul rax, [rsp]\nmov [rsp], rax");
+  switch(type) {
+  case INTTYPE:
+    statement_append_instruction(cur_stmt, "pop rax\nimul rax, [rsp]\nmov [rsp], rax");
+    break;
+  case FLOATTYPE:
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp+8]"); // stack alignment crap
+    statement_append_instruction(cur_stmt, "fmulp st1");
+    statement_append_instruction(cur_stmt, "fstp QWORD [rsp+8]");
+    statement_append_instruction(cur_stmt, "pop rax");
+    break;
+  }
 }
 
 void oper_sub(enum yytokentype type) {
-  statement_append_instruction(cur_stmt, "pop rax\nsub [rsp], rax");
+  switch(type) {
+  case INTTYPE:
+    statement_append_instruction(cur_stmt, "pop rax\nsub [rsp], rax");
+    break;
+  case FLOATTYPE:
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp+8]"); // stack alignment crap
+    statement_append_instruction(cur_stmt, "fsubrp st1");
+    statement_append_instruction(cur_stmt, "fstp QWORD [rsp+8]");
+    statement_append_instruction(cur_stmt, "pop rax");
+    break;
+  }
 }
 
 void oper_div(enum yytokentype type) {
-  statement_append_instruction(cur_stmt, "pop rcx\npop rax\ncqo\nidiv QWORD rcx\npush QWORD rax");
+  switch(type) {
+  case INTTYPE:
+    statement_append_instruction(cur_stmt, "pop rcx\npop rax\ncqo\nidiv QWORD rcx\npush QWORD rax");
+    break;
+  case FLOATTYPE:
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp+8]"); // stack alignment crap
+    statement_append_instruction(cur_stmt, "fdivrp");
+    statement_append_instruction(cur_stmt, "fstp QWORD [rsp+8]");
+    statement_append_instruction(cur_stmt, "pop rax");
+    break;
+  }
 }
 
 void oper_neg(enum yytokentype type) {
-  statement_append_instruction(cur_stmt, "neg QWORD [rsp]");
+  switch(type) {
+  case INTTYPE:
+    statement_append_instruction(cur_stmt, "neg QWORD [rsp]");
+    break;
+  case FLOATTYPE:
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "fchs");
+    statement_append_instruction(cur_stmt, "fstp QWORD [rsp]");
+    break;
+  }
 }
 
 void oper_mod(enum yytokentype type) {
-  statement_append_instruction(cur_stmt, "pop rcx\npop rax\ncqo\nidiv QWORD rcx\npush QWORD rbx");
+  switch(type) {
+  case INTTYPE:
+    statement_append_instruction(cur_stmt, "pop rcx\npop rax\ncqo\nidiv QWORD rcx\npush QWORD rbx");
+    break;
+  case FLOATTYPE:
+    statement_append_instruction(cur_stmt, "movlps xmm1, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "pop rax");
+    statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov al, 2");
+    statement_append_instruction(cur_stmt, "call fmod");
+    statement_append_instruction(cur_stmt, "movlps QWORD [rsp], xmm0");
+    break;
+  }
 }
 
 void oper_pow(enum yytokentype type) {
-  statement_append_instruction(cur_stmt, "pop rdi\npop rsi\ncall intpow\npush rax");
+  switch(type) {
+  case INTTYPE:
+    statement_append_instruction(cur_stmt, "pop rdi\npop rsi\ncall intpow\npush rax");
+    break;
+  case FLOATTYPE:
+    statement_append_instruction(cur_stmt, "movlps xmm1, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "pop rax");
+    statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov al, 2");
+    statement_append_instruction(cur_stmt, "call pow");
+    statement_append_instruction(cur_stmt, "movlps QWORD [rsp], xmm0");
+    break;
+  }
 }
 
 void type_check(enum yytokentype a, enum yytokentype b) {
