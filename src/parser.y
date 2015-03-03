@@ -17,7 +17,6 @@ int yylex();
  struct Statement *cur_stmt;
 
 /* Our functions */
- void asm_start();
  void asm_literal_int(int);
  void asm_literal_float(double);
  void oper_add(enum yytokentype);
@@ -214,21 +213,6 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
 
 %%
 
-void asm_start() {
-  printf("    extern printf\n\n"
-
-	 "    SECTION .data\n"
-	 "fmt_decimal_nl:\n"
-	 "    db \"%%ld\", 10, 0\n\n"
-
-	 "    SECTION .text\n"
-	 "    global main\n\n");
-}
-
-void asm_const_int(const char *name, int value) {
-  printf("%s: QWORD %d\n", name, value);
-}
-
 void asm_literal_int(int num) {
   statement_push_int(cur_stmt, num);
 }
@@ -378,9 +362,11 @@ void oper_pow(enum yytokentype type) {
     statement_pop(cur_stmt, RAX);
     statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov al, 2");
+
     statement_stack_align(cur_stmt);
     statement_append_instruction(cur_stmt, "call pow");
     statement_stack_reset(cur_stmt);
+
     statement_append_instruction(cur_stmt, "movlps QWORD [rsp], xmm0");
     break;
   }
@@ -390,16 +376,6 @@ void type_check(enum yytokentype a, enum yytokentype b) {
   if (a != b) {
     yyerror("Incompatible Types");
   }
-}
-
-void asm_func_return_regval(const char *reg) {
-  if (strcmp(reg, "rax")) {
-    printf("    mov rax, %s ; return_regval(%s)\n", reg, reg);
-  }
-}
-
-void asm_func_return_const(int val) {
-  printf("    mov rax, QWORD %d ; return_const(%d)\n", val, val);
 }
 
 void yyerror(const char *msg)
