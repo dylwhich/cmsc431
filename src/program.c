@@ -46,6 +46,9 @@ void block_write_head(struct Block *this, FILE *out) {
     fprintf(out, "extern printf\n\n");
     fprintf(out, "SECTION .data\n");
     fprintf(out, "fmt_decimal_nl:\n    db \"%%ld\", 10, 0\n\n");
+    fprintf(out, "fmt_decimal:\n    db \"%%ld\", 0\n\n");
+    fprintf(out, "fmt_float_nl:\n    db \"%%.4f\", 10, 0\n\n");
+    fprintf(out, "fmt_float:\n    db \"%%.4f\", 0\n\n");
     // END HACK
     fprintf(out, "SECTION .bss\n");
     fprintf(out, "%s: \n", this->global_data->data_label);
