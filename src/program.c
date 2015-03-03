@@ -23,12 +23,12 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
   if (block_is_global(this)) {
     this->global_data = malloc(sizeof(struct GlobalData));
     this->global_data->next_bss_offset = 0;
-    this->global_data->bss_label = malloc(12 * sizeof(char));
-    strcpy(this->global_data->bss_label, "initglobals");
+    this->global_data->bss_label = malloc(8 * sizeof(char));
+    strcpy(this->global_data->bss_label, "globals");
 
     this->global_data->next_data_offset = 0;
-    this->global_data->data_label = malloc(8 * sizeof(char));
-    strcpy(this->global_data->data_label, "globals");
+    this->global_data->data_label = malloc(12 * sizeof(char));
+    strcpy(this->global_data->data_label, "initglobals");
   } else {
     this->global_data = parent->global_data;
   }
@@ -199,6 +199,8 @@ struct Symbol *block_add_symbol_initialized(struct Block *this, const char *name
   // TODO: don't hardcode
   symbol_init(symbol, st, this->global_data->next_data_offset, 8, this, name);
   this->global_data->next_data_offset += 8;
+
+  symbol->location.type = INITIALIZED;
 
   strncpy(symbol->initval, initial_value, sizeof(symbol->initval));
 
