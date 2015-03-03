@@ -274,7 +274,18 @@ void asm_func_footer() {
 }
 
 void oper_add(enum yytokentype type) {
-  statement_append_instruction(cur_stmt, "pop rax\nadd [rsp], rax");
+  switch (type) {
+  case INTTYPE:
+    statement_append_instruction(cur_stmt, "pop rax\nadd [rsp], rax");
+    break;
+  case FLOATTYPE:
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp+8]"); // stack alignment crap
+    statement_append_instruction(cur_stmt, "fadd st0, st1");
+    statement_append_instruction(cur_stmt, "fst QWORD [rsp+8]");
+    statement_append_instruction(cur_stmt, "pop rax");
+    break;
+  }
 }
 
 void oper_mul(enum yytokentype type) {
