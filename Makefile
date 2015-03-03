@@ -1,4 +1,4 @@
-export VERSION := 1
+export VERSION := 2
 export ROOT := ${CURDIR}
 export SRC := $(ROOT)/src
 export TESTS := $(ROOT)/tests
