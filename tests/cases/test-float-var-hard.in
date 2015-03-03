@@ -1,0 +1,9 @@
+float a
+float longvariablename
+float cR9_zY3V_rbleN_A_m3
+a = 36.0 * 17.3 + 15.9
+longvariablename = 7.0
+cR9_zY3V_rbleN_A_m3 = a ** longvariablename - (a % 5.0) * 7.6
+print a
+print longvariablename
+print cR9_zY3V_rbleN_A_m3
