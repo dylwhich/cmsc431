@@ -91,7 +91,7 @@ PRINT expr {
     statement_append_instruction(cur_stmt, "mov rdi, fmt_decimal_nl");
     break;
   case FLOATTYPE:
-    statement_append_instruction(cur_stmt, "mov rd, fmt_float_nl");
+    statement_append_instruction(cur_stmt, "mov rdi, fmt_float_nl");
     break;
   default:
     printf("; I DON'T KNOW %d\n", $2);
