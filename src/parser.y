@@ -30,6 +30,7 @@ int yylex();
  void oper_neg();
  void oper_mod();
  void oper_pow();
+ void type_check(enum yytokentype a, enum yytokentype b);
 %}
 
 /* yylval union type */
@@ -158,13 +159,13 @@ INTEGER           { asm_literal($1); $$ = INTTYPE; }
   }
   $$ = block_resolve_symbol(cur_scope, $1)->type.value.primitive;
 }
-| expr '+' expr   { oper_add(); }
-| expr '-' expr   { oper_sub(); }
-| expr '*' expr   { oper_mul(); }
-| expr '/' expr   { oper_div(); }
-| expr '%' expr   { oper_mod(); }
-| '-' expr        { oper_neg(); }
-| expr POW expr   { oper_pow(); }
+| expr '+' expr   { type_check($1, $3); $$ = $3; oper_add(); }
+| expr '-' expr   { type_check($1, $3); $$ = $3; oper_sub(); }
+| expr '*' expr   { type_check($1, $3); $$ = $3; oper_mul(); }
+| expr '/' expr   { type_check($1, $3); $$ = $3; oper_div(); }
+| expr '%' expr   { type_check($1, $3); $$ = $3; oper_mod(); }
+| '-' expr        { $$ = $2; oper_neg(); }
+| expr POW expr   { type_check($1, $3); $$ = $3; oper_pow(); }
 | '(' expr ')'    { $$ = $2; }
 ;
 
@@ -266,6 +267,12 @@ void oper_mod() {
 
 void oper_pow() {
   statement_append_instruction(cur_stmt, "pop rdi\npop rsi\ncall intpow\npush rax");
+}
+
+void type_check(enum yytokentype a, enum yytokentype b) {
+  if (a != b) {
+    yyerror("Incompatible Types");
+  }
 }
 
 void asm_func_call(const char *name, int nargs, int nrets) {
