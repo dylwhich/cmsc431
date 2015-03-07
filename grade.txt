@@ -1,26 +1,24 @@
 Project 1
 
-Name: Dylan Whichard (dylwhich) 
+Name: 
 ===============================================================================
 
 Correctness/Completeness (55%)
-     (2 pts) Compiler handles expressions consisting of a single number
-     (3 pts) Compiler handles addition
-     (3 pts) Compiler handles subtraction
-     (3 pts) Compiler handles multiplication
-     (3 pts) Compiler handles division
-     (3 pts) Compiler handles modulus
-     (3 pts) Compiler handles negation
-     (5 pts) Compiler handles exponentiation
-     (4 pts) Exponentiation is done using intpow function written in assembly
-     (3 pts) Compiler handles parentheses
-     (6 pts) Compiler handles repeated operations in an expression
-     (8 pts) Compiler handles expressions that have many operators with 
-             different precedences
-     (3 pts) Compiler recognizes and handles syntax errors
-     (3 pts) Generated code only relies on printf as an extern C function
-     (3 pts) Call stack is cleaned up at the end of each function in
-             generated code
+     (3 pts) Compiler includes print statements
+     (4 pts) Compiler includes 2 versions of print statements -
+             newline and no newline
+    (10 pts) Floating point math works correctly (addition, subtraction,
+             multiplication, division, exponentiation, negation)
+-2   (4 pts) Compiler correctly prints integer and float math expressions
+     (5 pts) Compiler includes declaration statements
+     (5 pts) Integer and floating point variables can be declared
+     (4 pts) Compiler correctly recognizes variable redeclarations
+     (5 pts) Compiler includes assignment statements
+     (5 pts) Variable values are correctly updated in assignments
+     (5 pts) Type checking is correctly performed in assignments statements
+             and expressions
+     (5 pts) Variables can be included in math expressions
+    
 
 Testing (30%)
      (5 pts) "Easy" testcase
@@ -42,12 +40,14 @@ Documentation (10%)
 
 Comments:
 
-Outstanding work! 
+Higher level documentation for functions might be helpful. I was able to 
+figure out what they do from their names though.
 
-All specified mathematical operations are supported. 
-Test cases were complex and demonstrated the compiler's abilities well. 
-Code and documentation look good.
+Printing floating point values produces a "mismatch in operand sizes" error 
+when the code is assembled on the GL servers. Changing the "movlps" 
+instructions to "movq" instructions seemed to fix it. 
+All other functionality looks great!
 
 ===============================================================================
 
-Total Score: 100/100
+Total Score: 98/100
