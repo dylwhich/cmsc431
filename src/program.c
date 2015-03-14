@@ -57,6 +57,8 @@ void block_write_head(struct Block *this, FILE *out) {
     fprintf(out, "fmt_decimal:\n    db \"%%ld\", 0\n\n");
     fprintf(out, "fmt_float_nl:\n    db \"%%.4lf\", 10, 0\n\n");
     fprintf(out, "fmt_float:\n    db \"%%.4lf\", 0\n\n");
+    fprintf(out, "fmt_string_nl:\n    db \"%%s\", 10, 0\n\n");
+    fprintf(out, "fmt_string:\n    db \"%%s\", 0\n\n");
     // END HACK
     fprintf(out, "%s: \n", this->global_data->data_label);
 
@@ -495,6 +497,94 @@ void symbol_init(struct Symbol *this, struct SymbolType type, long offset,
   this->label[SYMBOL_MAX_LENGTH-1] = '\0';
 }
 
+void string_write_nasm(FILE *out, const char *in) {
+  const char *cur = in + 1;
+  int in_str = 0;
+  int escaping = 0;
+
+  if (cur == '\\') {
+    escaping = 1;
+  } else if (*cur < 32 || *cur == 34 || *cur > 126) {
+    fprintf(out, "%d, ", *cur);
+  } else {
+    fprintf(out, "\"%c", *cur);
+    in_str = 1;
+  }
+
+  cur++;
+
+  while (*cur != '\0') {
+    if (*cur == '\\') {
+      if (escaping) {
+	if (in_str) {
+	  fprintf(out, "\", 92");
+	} else {
+	  fprintf(out, ", 92");
+	}
+	escaping = 0;
+      } else {
+	escaping = 1;
+      }
+    } else if (escaping) {
+      if (in_str)
+	fprintf(out, "\"");
+
+      fprintf(out, ", ");
+
+      switch (*cur) {
+      case '0':
+	fprintf(out, "0");
+	break;
+      case '"':
+	fprintf(out, "34");
+	break;
+      case 'b':
+	fprintf(out, "8");
+	break;
+      case 'f':
+	fprintf(out, "12");
+	break;
+      case 'n':
+	fprintf(out, "10");
+	break;
+      case 'r':
+	fprintf(out, "13");
+	break;
+      case 't':
+	fprintf(out, "9");
+	break;
+      case 'v':
+	fprintf(out, "11");
+	break;
+      default:
+	fprintf(out, "%d", *cur);
+	break;
+      }
+      escaping = 0;
+    } else if (*cur < 32 || *cur == 34 || *cur > 126) {
+      if (in_str) {
+	fprintf(out, "\", %d", *cur);
+      } else {
+	fprintf(out, ", %d", *cur);
+      }
+      in_str = 0;
+    } else {
+      if (in_str) {
+	fprintf(out, "%c", *cur);
+      } else {
+	fprintf(out, ", \"%c", *cur);
+      }
+      in_str = 1;
+    }
+    cur++;
+  }
+  if (in_str) {
+    fprintf(out, "\"");
+  }
+
+  fprintf(out, ", 0\n");
+}
+
 void symbol_write_declaration(struct Symbol *this, FILE *out) {
   switch (this->location.type) {
   case LABEL:
@@ -511,7 +601,12 @@ void symbol_write_declaration(struct Symbol *this, FILE *out) {
     break;
 
   case INITIALIZED:
-    fprintf(out, "    dq %s\n", this->initval);
+    if (this->type.type == PRIMITIVE && this->type.value.primitive == STRINGTYPE) {
+      fprintf(out, "    dq ");
+      string_write_nasm(out, this->initval);
+    } else {
+      fprintf(out, "    dq %s\n", this->initval);
+    }
     break;
 
   default:
@@ -538,7 +633,7 @@ void symbol_write_reference(struct Symbol *this, FILE *out) {
     break;
 
   case INITIALIZED:
-    fprintf(out, "qword [%s+%ld", this->scope->global_data->data_label, this->offset);
+    fprintf(out, "qword [%s+%ld]", this->scope->global_data->data_label, this->offset);
     break;
   }
 }
@@ -561,7 +656,12 @@ void symbol_get_reference(struct Symbol *this, char *out) {
     break;
 
   case INITIALIZED:
-    sprintf(out, "qword [%s+%ld]", this->scope->global_data->data_label, this->offset);
+    if (this->type.type == PRIMITIVE && this->type.value.primitive == STRINGTYPE) {
+      sprintf(out, ";;woooo\n");
+      sprintf(out, "[%s+%ld]", this->scope->global_data->data_label, this->offset);
+    } else {
+      sprintf(out, "qword [%s+%ld]", this->scope->global_data->data_label, this->offset);
+    }
     break;
   }
 }

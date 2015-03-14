@@ -19,6 +19,7 @@ int yylex();
 /* Our functions */
  void asm_literal_int(int);
  void asm_literal_float(double);
+ void asm_literal_string(const char*);
  void oper_add(enum yytokentype);
  void oper_sub(enum yytokentype);
  void oper_mul(enum yytokentype);
@@ -34,16 +35,19 @@ int yylex();
   long longval;
   double floatval;
   char idval[64];
+  char *stringval;
 }
 
 /* Miscellaneous token types */
 %token <longval> INTEGER
 %token <floatval> FLOAT
+%token <stringval> STRING
 %token <idval> ID
 %token PRINT
 %token PRINTL
 %token <longval> INTTYPE
 %token <floatval> FLOATTYPE
+%token <stringval> STRINGTYPE
 
 /* Operators */
 %left '+' '-'
@@ -92,6 +96,11 @@ PRINTL expr {
     statement_append_instruction(cur_stmt, "mov al, 1");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_float_nl");
     break;
+  case STRINGTYPE:
+    statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov rdi, fmt_string_nl");
+    statement_append_instruction(cur_stmt, "mov al, 0");
+    break;
   default:
     printf("; I DON'T KNOW %d\n", $2);
     break;
@@ -111,6 +120,11 @@ PRINTL expr {
     statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov al, 1");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_float");
+    break;
+  case STRINGTYPE:
+    statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov rdi, fmt_string");
+    statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   default:
     printf("; I DON'T KNOW %d\n", $2);
@@ -184,6 +198,7 @@ ID '=' expr {
 expr:
 INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
 | FLOAT           { asm_literal_float($1); $$ = FLOATTYPE; }
+| STRING          { asm_literal_string($1); $$ = STRINGTYPE; }
 | ID {
   char ref[64];
   char inst[80];
@@ -231,6 +246,24 @@ void asm_literal_float(double num) {
 
   statement_append_instruction(cur_stmt, tmp);
   statement_push(cur_stmt, RAX);
+}
+
+void asm_literal_string(const char *str) {
+  char tmp[64], tmp2[64];
+  struct Symbol *symbol;
+
+  statement_append_instruction(cur_stmt, ";;+asm_literal_string\n");
+
+  block_get_unique_name(cur_scope, tmp);
+  symbol = block_add_symbol_initialized(cur_scope, tmp, STRINGTYPE, str);
+
+  symbol_get_reference(symbol, tmp);
+  sprintf(tmp2, "lea rax, %s", tmp);
+
+  statement_append_instruction(cur_stmt, tmp2);
+  statement_push(cur_stmt, RAX);
+
+  statement_append_instruction(cur_stmt, ";;-asm_literal_string\n");
 }
 
 void oper_add(enum yytokentype type) {

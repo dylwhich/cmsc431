@@ -6,6 +6,11 @@
 
 %%
 
+\"[^"\n]*["\n] {
+    yylval.stringval = strdup(yytext);
+    return STRING;
+}
+
 [[:digit:]]+ {
     /* Integers */
     yylval.longval = atol(yytext);
