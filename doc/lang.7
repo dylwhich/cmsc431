@@ -66,7 +66,8 @@ Declares a floating-point variable with the specified name.
 .
 .SS Print Statements
 The language supports two kinds of print statements: one which prints
-a trailing newline and one which does not.
+a trailing newline and one which does not. The argument to these may
+be: an integer expression, a float expression, or a string literal.
 .TP
 print stmt
 Prints stmt without a trailing newline. The statement may be an integer
@@ -76,11 +77,25 @@ printl stmt
 Prints stmt with a trailing newline. The statement may be an integer or
 a floating-point expression
 .
+.SS Input Statements
+The language also supports two input statements, for both integer and
+floating point values.
+.TP
+readint
+Reads an integer from stdin and returns it.
+.TP
+readfloat
+Reads a float from stdin and returns it.
+.
 .SH LIMITATIONS
 .IP \(bu
 A newline is required after each mathematical expression.
 .IP \(bu
 Newlines may not be present within the expression.
+.IP \(bu
+String literals may not exceed 63 characters in length.
+.IP \(bu
+String literals cannot contain escaped quotes.
 .
 .SH AUTHOR
 Dylan Whichard <dylwhich@umbc.edu>
