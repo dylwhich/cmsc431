@@ -498,11 +498,12 @@ void symbol_init(struct Symbol *this, struct SymbolType type, long offset,
 }
 
 void string_write_nasm(FILE *out, const char *in) {
+  // Skip the beginning quote
   const char *cur = in + 1;
   int in_str = 0;
   int escaping = 0;
 
-  if (cur == '\\') {
+  if (*cur == '\\') {
     escaping = 1;
   } else if (*cur < 32 || *cur == 34 || *cur > 126) {
     fprintf(out, "%d, ", *cur);
@@ -514,13 +515,21 @@ void string_write_nasm(FILE *out, const char *in) {
   cur++;
 
   while (*cur != '\0') {
+    // Ignore the ending quote
+    if (*cur == 34 && *(cur+1) == '\0') {
+      break;
+    }
+
     if (*cur == '\\') {
       if (escaping) {
-	if (in_str) {
-	  fprintf(out, "\", 92");
-	} else {
-	  fprintf(out, ", 92");
-	}
+	if (in_str)
+	  fprintf(out, "\\");
+
+	if (cur != in + 2)
+	  fprintf(out, ", ");
+
+	fprintf(out, "92");
+
 	escaping = 0;
       } else {
 	escaping = 1;
@@ -529,7 +538,8 @@ void string_write_nasm(FILE *out, const char *in) {
       if (in_str)
 	fprintf(out, "\"");
 
-      fprintf(out, ", ");
+      if (cur != in + 2)
+	fprintf(out, ", ");
 
       switch (*cur) {
       case '0':
@@ -561,6 +571,7 @@ void string_write_nasm(FILE *out, const char *in) {
 	break;
       }
       escaping = 0;
+      in_str = 0;
     } else if (*cur < 32 || *cur == 34 || *cur > 126) {
       if (in_str) {
 	fprintf(out, "\", %d", *cur);
