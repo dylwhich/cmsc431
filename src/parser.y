@@ -92,7 +92,7 @@ PRINTL expr {
     statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   case FLOATTYPE:
-    statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "movq xmm0, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov al, 1");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_float_nl");
     break;
@@ -117,7 +117,7 @@ PRINTL expr {
     statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   case FLOATTYPE:
-    statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "movq xmm0, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov al, 1");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_float");
     break;
@@ -370,14 +370,14 @@ void oper_mod(enum yytokentype type) {
     statement_push(cur_stmt, RBX);
     break;
   case FLOATTYPE:
-    statement_append_instruction(cur_stmt, "movlps xmm1, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "movq xmm1, QWORD [rsp]");
     statement_pop(cur_stmt, RAX);
-    statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "movq xmm0, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov al, 2");
     statement_stack_align(cur_stmt);
     statement_append_instruction(cur_stmt, "call fmod");
     statement_stack_reset(cur_stmt);
-    statement_append_instruction(cur_stmt, "movlps QWORD [rsp], xmm0");
+    statement_append_instruction(cur_stmt, "movq QWORD [rsp], xmm0");
     break;
   }
 }
@@ -391,16 +391,16 @@ void oper_pow(enum yytokentype type) {
     statement_push(cur_stmt, RAX);
     break;
   case FLOATTYPE:
-    statement_append_instruction(cur_stmt, "movlps xmm1, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "movq xmm1, QWORD [rsp]");
     statement_pop(cur_stmt, RAX);
-    statement_append_instruction(cur_stmt, "movlps xmm0, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "movq xmm0, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov al, 2");
 
     statement_stack_align(cur_stmt);
     statement_append_instruction(cur_stmt, "call pow");
     statement_stack_reset(cur_stmt);
 
-    statement_append_instruction(cur_stmt, "movlps QWORD [rsp], xmm0");
+    statement_append_instruction(cur_stmt, "movq QWORD [rsp], xmm0");
     break;
   }
 }
