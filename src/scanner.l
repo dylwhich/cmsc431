@@ -28,6 +28,14 @@
     return POW;
 }
 
+"readint" {
+    return READINT;
+}
+
+"readfloat" {
+    return READFLOAT;
+}
+
 "printl" {
     /* Print-line statement */
     return PRINTL;

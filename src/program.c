@@ -50,6 +50,7 @@ void block_write_head(struct Block *this, FILE *out) {
     // BEGIN HACK
     // TODO make something for declaring constant globals here
     fprintf(out, "extern printf\n");
+    fprintf(out, "extern scanf\n");
     fprintf(out, "extern pow\n");
     fprintf(out, "extern fmod\n\n");
     fprintf(out, "SECTION .data\n");
@@ -59,6 +60,8 @@ void block_write_head(struct Block *this, FILE *out) {
     fprintf(out, "fmt_float:\n    db \"%%.4lf\", 0\n\n");
     fprintf(out, "fmt_string_nl:\n    db \"%%s\", 10, 0\n\n");
     fprintf(out, "fmt_string:\n    db \"%%s\", 0\n\n");
+    fprintf(out, "fmt_input_int:\n    db \"%%ld\", 0\n\n");
+    fprintf(out, "fmt_input_float:\n    db \"%%lf\", 0\n\n");
     // END HACK
     fprintf(out, "%s: \n", this->global_data->data_label);
 
