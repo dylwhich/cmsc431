@@ -1,0 +1,5 @@
+float a
+float b
+a = readfloat
+b = readfloat
+printl a * b - b + a
