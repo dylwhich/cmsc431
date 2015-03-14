@@ -210,12 +210,15 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
   $$ = INTTYPE;
 }
 | READFLOAT {
-  asm_literal_float(0.0);
-  statement_append_instruction(cur_stmt, "mov rsi, rsp");
-  //  statement_append_instruction(cur_stmt, "movq xmm0, QWORD [rsp]");
+  // push a dummy value onto the stack
+  statement_append_instruction(cur_stmt, "xor rax, rax");
+  statement_push(cur_stmt, RAX);
+  statement_append_instruction(cur_stmt, "lea rsi, [rsp]");
   statement_append_instruction(cur_stmt, "mov rdi, fmt_input_float");
-  statement_append_instruction(cur_stmt, "mov al, 1");
+  statement_append_instruction(cur_stmt, "mov al, 0");
+
   statement_append_instruction(cur_stmt, "call scanf");
+
   $$ = FLOATTYPE;
 }
 | ID {
