@@ -23,6 +23,16 @@
     return FLOAT;
 }
 
+"true" {
+  yylval.boolval = 1;
+  return BOOL;
+}
+
+"false" {
+  yylval.boolval = 0;
+  return BOOL;
+}
+
 "**" {
     /* Exponentiation operator */
     return POW;
@@ -52,6 +62,10 @@
 
 "float" {
     return FLOATTYPE;
+}
+
+"bool" {
+    return BOOLTYPE;
 }
 
 [a-zA-Z_][a-zA-Z_0-9]* {

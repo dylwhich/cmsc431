@@ -20,6 +20,7 @@ int yylex();
  void asm_literal_int(int);
  void asm_literal_float(double);
  void asm_literal_string(const char*);
+ void asm_literal_bool(char);
  void oper_add(enum yytokentype);
  void oper_sub(enum yytokentype);
  void oper_mul(enum yytokentype);
@@ -34,6 +35,7 @@ int yylex();
 %union {
   long longval;
   double floatval;
+  char boolval;
   char idval[64];
   char *stringval;
 }
@@ -41,12 +43,14 @@ int yylex();
 /* Miscellaneous token types */
 %token <longval> INTEGER
 %token <floatval> FLOAT
+%token <boolval> BOOL
 %token <stringval> STRING
 %token <idval> ID
 %token PRINT
 %token PRINTL
 %token <longval> INTTYPE
 %token <floatval> FLOATTYPE
+%token <boolval> BOOLTYPE
 %token <stringval> STRINGTYPE
 %token <longval> READINT
 %token <floatval> READFLOAT
@@ -103,6 +107,13 @@ PRINTL expr {
     statement_append_instruction(cur_stmt, "mov rdi, fmt_string_nl");
     statement_append_instruction(cur_stmt, "mov al, 0");
     break;
+  case BOOLTYPE:
+    statement_append_instruction(cur_stmt, "mov rdi, bool_str_true_nl");
+    statement_append_instruction(cur_stmt, "mov rax, bool_str_false_nl");
+    statement_append_instruction(cur_stmt, "cmp QWORD [rsp], QWORD 0");
+    statement_append_instruction(cur_stmt, "cmovz rdi, rax");
+    statement_append_instruction(cur_stmt, "mov al, 0");
+    break;
   default:
     printf("; I DON'T KNOW %d\n", $2);
     break;
@@ -126,6 +137,13 @@ PRINTL expr {
   case STRINGTYPE:
     statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp]");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_string");
+    statement_append_instruction(cur_stmt, "mov al, 0");
+    break;
+  case BOOLTYPE:
+    statement_append_instruction(cur_stmt, "mov rdi, bool_str_true");
+    statement_append_instruction(cur_stmt, "mov rax, bool_str_false");
+    statement_append_instruction(cur_stmt, "cmp QWORD [rsp], QWORD 0");
+    statement_append_instruction(cur_stmt, "cmovz rdi, rax");
     statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   default:
@@ -171,6 +189,22 @@ INTTYPE ID {
   sl.type = LABEL;
   block_add_symbol(cur_scope, $2, st, sl);
 }
+| BOOLTYPE ID {
+  struct SymbolType st;
+  struct StorageLocation sl;
+
+  if (block_resolve_symbol(cur_scope, $2) != NULL) {
+    fprintf(stderr, "Symbol %s:\n", $2);
+    yyerror("Double declaration invalid");
+  }
+
+  st.type = PRIMITIVE;
+  st.value.primitive = BOOLTYPE;
+
+  sl.type = LABEL;
+
+  block_add_symbol(cur_scope, $2, st, sl);
+}
 ;
 
 assign:
@@ -200,6 +234,7 @@ ID '=' expr {
 expr:
 INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
 | FLOAT           { asm_literal_float($1); $$ = FLOATTYPE; }
+| BOOL            { asm_literal_bool($1); $$ = BOOLTYPE; }
 | STRING          { asm_literal_string($1); $$ = STRINGTYPE; }
 | READINT {
   statement_push(cur_stmt, RAX);
@@ -286,6 +321,10 @@ void asm_literal_string(const char *str) {
   statement_push(cur_stmt, RAX);
 
   statement_append_instruction(cur_stmt, ";;-asm_literal_string\n");
+}
+
+void asm_literal_bool(char val) {
+  statement_push_int(cur_stmt, val);
 }
 
 void oper_add(enum yytokentype type) {

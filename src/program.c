@@ -62,6 +62,12 @@ void block_write_head(struct Block *this, FILE *out) {
     fprintf(out, "fmt_string:\n    db \"%%s\", 0\n\n");
     fprintf(out, "fmt_input_int:\n    db \"%%ld\", 0\n\n");
     fprintf(out, "fmt_input_float:\n    db \"%%lf\", 0\n\n");
+    fprintf(out, "bool_str_true:\n    db \"true\", 0\n\n");
+    fprintf(out, "bool_str_false:\n    db \"false\", 0\n\n");
+    fprintf(out, "bool_str_true_nl:\n    db \"true\", 10, 0\n\n");
+    fprintf(out, "bool_str_false_nl:\n    db \"false\", 10, 0\n\n");
+    fprintf(out, "bool_const_true:\n    dq 1\n\n");
+    fprintf(out, "bool_const_false:\n    dq 0\n\n");
     // END HACK
     fprintf(out, "%s: \n", this->global_data->data_label);
 
