@@ -377,6 +377,20 @@ void oper_bool_or(enum yytokentype a, enum yytokentype b) {
 }
 
 void oper_bool_and(enum yytokentype a, enum yytokentype b)  {
+  statement_pop(cur_stmt, RAX);
+  statement_pop(cur_stmt, RDX);
+
+  // Default to false
+  statement_append_instruction(cur_stmt, "mov rcx, [bool_const_false]");
+
+  // Check whether rax*rdx is zero.
+  // What a convenient instruction...
+  statement_append_instruction(cur_stmt, "test rax, rdx");
+
+  // If it's not zero, then change the result to true
+  statement_append_instruction(cur_stmt, "cmovnz rcx, QWORD [bool_const_true]");
+
+  statement_push(cur_stmt, RCX);
 }
 
 void oper_bool_xor(enum yytokentype a, enum yytokentype b)  {
