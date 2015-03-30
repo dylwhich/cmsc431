@@ -38,6 +38,36 @@
     return POW;
 }
 
+"and" {
+    /* Boolean And */
+    return BOOL_AND;
+}
+
+"or" {
+    /* Boolean And */
+    return BOOL_OR;
+}
+
+"xor" {
+    /* Boolean And */
+    return BOOL_XOR;
+}
+
+"==" {
+    /* Boolean Equal */
+    return BOOL_EQUAL;
+}
+
+"<=" {
+    /* Boolean Less-Than-Or-Equal */
+    return BOOL_LESS_EQUAL;
+}
+
+">=" {
+    /* Boolean Greater-Than-Or-Equal */
+    return BOOL_GREATER_EQUAL;
+}
+
 "readint" {
     return READINT;
 }

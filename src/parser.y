@@ -21,6 +21,17 @@ int yylex();
  void asm_literal_float(double);
  void asm_literal_string(const char*);
  void asm_literal_bool(char);
+
+ void oper_bool_or(enum yytokentype, enum yytokentype);
+ void oper_bool_and(enum yytokentype, enum yytokentype);
+ void oper_bool_xor(enum yytokentype, enum yytokentype);
+ void oper_bool_eq(enum yytokentype, enum yytokentype);
+ void oper_bool_lt(enum yytokentype, enum yytokentype);
+ void oper_bool_le(enum yytokentype, enum yytokentype);
+ void oper_bool_gt(enum yytokentype, enum yytokentype);
+ void oper_bool_ge(enum yytokentype, enum yytokentype);
+ void oper_bool_not(enum yytokentype);
+
  void oper_add(enum yytokentype);
  void oper_sub(enum yytokentype);
  void oper_mul(enum yytokentype);
@@ -56,9 +67,14 @@ int yylex();
 %token <floatval> READFLOAT
 
 /* Operators */
+%left BOOL_OR
+%left BOOL_AND
+%left BOOL_XOR
+%left BOOL_EQUAL
+%left '<' BOOL_LESS_EQUAL '>' BOOL_GREATER_EQUAL
 %left '+' '-'
 %left '*' '/' '%'
-%right UMINUS
+%right UMINUS '!'
 %right POW
 
 /* Nonterminal types */
@@ -273,12 +289,22 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
   }
   $$ = block_resolve_symbol(cur_scope, $1)->type.value.primitive;
 }
+| expr BOOL_OR expr            { $$ = BOOLTYPE; oper_bool_or($1, $3); }
+| expr BOOL_AND expr           { $$ = BOOLTYPE; oper_bool_and($1, $3); }
+| expr BOOL_XOR expr           { $$ = BOOLTYPE; oper_bool_xor($1, $3); }
+| expr BOOL_EQUAL expr         { $$ = BOOLTYPE; oper_bool_eq($1, $3); }
+| expr '<' expr                { $$ = BOOLTYPE; oper_bool_lt($1, $3); }
+| expr BOOL_LESS_EQUAL expr    { $$ = BOOLTYPE; oper_bool_le($1, $3); }
+| expr '>' expr                { $$ = BOOLTYPE; oper_bool_gt($1, $3); }
+| expr BOOL_GREATER_EQUAL expr { $$ = BOOLTYPE; oper_bool_ge($1, $3); }
+
 | expr '+' expr   { type_check($1, $3); $$ = $3; oper_add($$); }
 | expr '-' expr   { type_check($1, $3); $$ = $3; oper_sub($$); }
 | expr '*' expr   { type_check($1, $3); $$ = $3; oper_mul($$); }
 | expr '/' expr   { type_check($1, $3); $$ = $3; oper_div($$); }
 | expr '%' expr   { type_check($1, $3); $$ = $3; oper_mod($$); }
 | '-' expr        { $$ = $2; oper_neg($$); }
+| '!' expr        { $$ = BOOLTYPE; oper_bool_not($2); }
 | expr POW expr   { type_check($1, $3); $$ = $3; oper_pow($$); }
 | '(' expr ')'    { $$ = $2; }
 ;
@@ -325,6 +351,50 @@ void asm_literal_string(const char *str) {
 
 void asm_literal_bool(char val) {
   statement_push_int(cur_stmt, val);
+}
+
+void cmp_bools(enum yytokentype a, enum yytokentype b) {
+  statement_pop(cur_stmt, RAX);
+  statement_pop(cur_stmt, RDX);
+  statement_append_instruction(cur_stmt, "cmp rax, rdx");
+}
+
+void oper_bool_or(enum yytokentype a, enum yytokentype b) {
+}
+
+void oper_bool_and(enum yytokentype a, enum yytokentype b)  {
+}
+
+void oper_bool_xor(enum yytokentype a, enum yytokentype b)  {
+  cmp_bools(a, b);
+}
+
+void oper_bool_eq(enum yytokentype a, enum yytokentype b)  {
+  cmp_bools(a, b);
+
+}
+
+void oper_bool_lt(enum yytokentype a, enum yytokentype b)  {
+  cmp_bools(a, b);
+
+}
+
+void oper_bool_le(enum yytokentype a, enum yytokentype b)  {
+  cmp_bools(a, b);
+
+}
+
+void oper_bool_gt(enum yytokentype a, enum yytokentype b)  {
+  cmp_bools(a, b);
+
+}
+
+void oper_bool_ge(enum yytokentype a, enum yytokentype b)  {
+  cmp_bools(a, b);
+
+}
+
+void oper_bool_not(enum yytokentype a)  {
 }
 
 void oper_add(enum yytokentype type) {
