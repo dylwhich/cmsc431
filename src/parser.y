@@ -354,8 +354,8 @@ void asm_literal_bool(char val) {
 }
 
 void cmp_bools(enum yytokentype a, enum yytokentype b) {
-  statement_pop(cur_stmt, RAX);
   statement_pop(cur_stmt, RDX);
+  statement_pop(cur_stmt, RAX);
   statement_append_instruction(cur_stmt, "cmp rax, rdx");
 }
 
@@ -430,8 +430,35 @@ void oper_bool_eq(enum yytokentype a, enum yytokentype b)  {
 }
 
 void oper_bool_lt(enum yytokentype a, enum yytokentype b)  {
-  cmp_bools(a, b);
+  type_check(a,b);
 
+  statement_append_instruction(cur_stmt, "mov rcx, QWORD [bool_const_false]");
+  switch (a) {
+  case INTTYPE:
+  case BOOLTYPE:
+    cmp_bools(a, b);
+    statement_append_instruction(cur_stmt, "cmovl rcx, QWORD [bool_const_true]");
+    statement_push(cur_stmt, RCX);
+    break;
+
+  case FLOATTYPE:
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+    statement_pop(cur_stmt, RAX);
+    statement_append_instruction(cur_stmt, "fld QWORD [rsp]");
+
+    statement_stack_align(cur_stmt);
+    statement_append_instruction(cur_stmt, "fcomip st1");
+    // stack reset might affect rflags? not taking any chances
+    statement_append_instruction(cur_stmt, "cmovb rcx, QWORD [bool_const_true]");
+    statement_append_instruction(cur_stmt, "fstp st0 ;clear off fp stack");
+    statement_stack_reset(cur_stmt);
+
+    statement_append_instruction(cur_stmt, "mov [rsp], rcx");
+    break;
+  default:
+    statement_append_instruction(cur_stmt, "; this should not happen, fix your shit");
+    break;
+  }
 }
 
 void oper_bool_le(enum yytokentype a, enum yytokentype b)  {
