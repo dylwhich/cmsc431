@@ -423,8 +423,10 @@ void oper_bool_xor(enum yytokentype a, enum yytokentype b)  {
 }
 
 void oper_bool_eq(enum yytokentype a, enum yytokentype b)  {
+  statement_append_instruction(cur_stmt, "mov rcx, QWORD [bool_const_false]");
   cmp_bools(a, b);
-
+  statement_append_instruction(cur_stmt, "cmove rcx, QWORD [bool_const_true]");
+  statement_push(cur_stmt, RCX);
 }
 
 void oper_bool_lt(enum yytokentype a, enum yytokentype b)  {
