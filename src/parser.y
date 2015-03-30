@@ -360,6 +360,20 @@ void cmp_bools(enum yytokentype a, enum yytokentype b) {
 }
 
 void oper_bool_or(enum yytokentype a, enum yytokentype b) {
+  statement_pop(cur_stmt, RAX);
+  statement_pop(cur_stmt, RDX);
+
+  statement_append_instruction(cur_stmt, "add rax, rdx");
+  // Default to true
+  statement_append_instruction(cur_stmt, "mov rcx, [bool_const_true]");
+
+  // Check whether rax or rdx is zero.
+  statement_append_instruction(cur_stmt, "or rax, rdx");
+
+  // If it's zero, then change the result to false
+  statement_append_instruction(cur_stmt, "cmovz rcx, QWORD [bool_const_false]");
+
+  statement_push(cur_stmt, RCX);
 }
 
 void oper_bool_and(enum yytokentype a, enum yytokentype b)  {
