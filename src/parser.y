@@ -394,7 +394,32 @@ void oper_bool_and(enum yytokentype a, enum yytokentype b)  {
 }
 
 void oper_bool_xor(enum yytokentype a, enum yytokentype b)  {
-  cmp_bools(a, b);
+  statement_pop(cur_stmt, RAX);
+  statement_pop(cur_stmt, RDX);
+
+  // We need to convert these to actually be one or zero
+  // Otherwise, a truthy value xor a truthy value will be
+  // true, even though 1 xor 1 is false.
+
+  // Basically, compare to rax to 0. If it is, store 0 in rcx
+  // Otherwise, store 1 in rcx. Then replace rax with rcx.
+  statement_append_instruction(cur_stmt, "mov rcx, QWORD [bool_const_true]");
+  statement_append_instruction(cur_stmt, "cmp rax, QWORD [bool_const_false]");
+  statement_append_instruction(cur_stmt, "cmovz rcx, QWORD [bool_const_false]");
+  statement_append_instruction(cur_stmt, "mov rax, rcx");
+
+  // Do the same for rdx
+  statement_append_instruction(cur_stmt, "mov rcx, QWORD [bool_const_true]");
+  statement_append_instruction(cur_stmt, "cmp rdx, QWORD [bool_const_false]");
+  statement_append_instruction(cur_stmt, "cmovz rcx, QWORD [bool_const_false]");
+  statement_append_instruction(cur_stmt, "mov rdx, rcx");
+
+  // Now we can just xor them
+  statement_append_instruction(cur_stmt, "mov rcx, QWORD [bool_const_true]");
+  statement_append_instruction(cur_stmt, "xor rax, rdx");
+  statement_append_instruction(cur_stmt, "cmovz rcx, QWORD [bool_const_false]");
+
+  statement_push(cur_stmt, RCX);
 }
 
 void oper_bool_eq(enum yytokentype a, enum yytokentype b)  {
