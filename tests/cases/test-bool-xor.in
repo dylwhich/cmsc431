@@ -1,0 +1,4 @@
+printl true xor true
+printl true xor false
+printl false xor true
+printl false xor false
