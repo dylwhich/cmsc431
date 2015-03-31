@@ -132,7 +132,7 @@ void block_write_body(struct Block *this, FILE *out) {
 	    "main:\n"
 	    "push rbp\n"
 	    "mov rbp, rsp\n");
-  }
+  } else fprintf(out, "%s:\n", this->name);
 
   for (child = this->children; child < (this->children + this->num_children); child++) {
     if (child->type == BLOCK) {

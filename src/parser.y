@@ -95,20 +95,21 @@ multi-stmt {
 ;
 
 multi-stmt:
-{ cur_stmt = block_add_statement(cur_scope); } stmt
-| multi-stmt { cur_stmt = block_add_statement(cur_scope); } stmt
-;
-
-block:
-'{' { cur_scope = block_add_child(cur_scope); } multi-stmt { cur_scope = cur_scope->parent; } '}'
+stmt
+| multi-stmt stmt
 ;
 
 stmt:
 block
-| expr ';'
-| declare ';'
-| assign ';'
-| print_stmt ';'
+| { cur_stmt = block_add_statement(cur_scope); } assign ';'
+| { cur_stmt = block_add_statement(cur_scope); } declare ';'
+| { cur_stmt = block_add_statement(cur_scope); } expr ';'
+| { cur_stmt = block_add_statement(cur_scope); } print_stmt ';'
+;
+
+block:
+'{' { cur_scope = block_add_child(cur_scope); }
+multi-stmt { cur_scope = cur_scope->parent; } '}'
 ;
 
 print_stmt:
