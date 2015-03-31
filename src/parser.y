@@ -491,6 +491,11 @@ void oper_bool_ge(enum yytokentype a, enum yytokentype b)  {
 }
 
 void oper_bool_not(enum yytokentype a)  {
+  statement_pop(cur_stmt, RAX);
+  statement_append_instruction(cur_stmt, "mov rdx, [bool_const_false]");
+  statement_append_instruction(cur_stmt, "cmp rax, 0");
+  statement_append_instruction(cur_stmt, "cmovz rdx, [bool_const_true]");
+  statement_push(cur_stmt, RDX);
 }
 
 void oper_add(enum yytokentype type) {
