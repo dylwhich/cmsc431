@@ -1,2 +1,2 @@
-printl 3 == 7
-printl 3 == 3
+printl 3 == 7;
+printl 3 == 3;

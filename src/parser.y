@@ -87,20 +87,25 @@ start: {
   block_init(&global_scope, "global", NULL);
   cur_scope = &global_scope;
  }
-program {
+multi-stmt {
   block_write(&global_scope, stdout);
   block_destroy(&global_scope);
   cur_scope = NULL;
 }
 ;
 
-program:
-{ cur_stmt = block_add_statement(cur_scope); } stmt '\n' {  }
-| program { cur_stmt = block_add_statement(cur_scope); } stmt '\n' { }
+multi-stmt:
+{ cur_stmt = block_add_statement(cur_scope); } stmt ';'
+| multi-stmt { cur_stmt = block_add_statement(cur_scope); } stmt ';'
+;
+
+block:
+'{' { cur_scope = block_add_child(cur_scope); } multi-stmt { cur_scope = cur_scope->parent; } '}'
 ;
 
 stmt:
-expr
+block
+| expr
 | declare
 | assign
 | print_stmt

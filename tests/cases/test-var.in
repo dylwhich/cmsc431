@@ -1,7 +1,7 @@
-int a
-int b
-a = 7
-b = 6
-printl a
-printl b
-printl 1337
+int a;
+int b;
+a = 7;
+b = 6;
+printl a;
+printl b;
+printl 1337;

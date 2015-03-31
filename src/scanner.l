@@ -109,7 +109,7 @@
     return ID;
 }
 
-[ \t]+ {
+[ \t\n]+ {
     /* Eat whitespace */
 }
 

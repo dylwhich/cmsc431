@@ -1,9 +1,9 @@
-int a
-int b
-int c
-a = 42
-c = 17
-b = a
-printl a
-printl b
-printl c
+int a;
+int b;
+int c;
+a = 42;
+c = 17;
+b = a;
+printl a;
+printl b;
+printl c;
