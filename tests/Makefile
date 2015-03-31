@@ -18,7 +18,9 @@ tests: $(OUTFILES) $(ASMFILES) $(COMPILER)
 run-tests: tests $(CHECKS)
 
 check-cases/test-%: cases/test-%.in cases/test-%.out cases/test-%.test
-	@$(word 2, $^) | diff $(word 3, $^) - || echo "^^^ $< FAILED"
+	@test -e $(addsuffix .stdin, $(basename $(word 1, $^) .in)) && \
+	    ( $(word 2, $^) < $(addsuffix .stdin, $(basename $(word 1, $^) .in)) | diff $(word 3, $^) - || echo "^^^ $< FAILED" ) || \
+	    ( $(word 2, $^) | diff $(word 3, $^) - || echo "^^^ $< FAILED" )
 
 cases/test-%.asm: cases/test-%.in $(COMPILER)
 	$(COMPILER) < $< > $@
