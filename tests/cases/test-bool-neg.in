@@ -1,0 +1,8 @@
+printl !true
+printl !false
+printl !(3 == 4)
+printl !!7
+printl !!0
+printl !!0.5
+printl !7.0
+printl !0.0

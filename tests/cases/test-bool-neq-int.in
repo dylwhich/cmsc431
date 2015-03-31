@@ -1,0 +1,3 @@
+printl 1 != 6
+printl 3 != 3
+printl 4 != -6

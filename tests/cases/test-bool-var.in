@@ -1,0 +1,4 @@
+bool a
+a = true
+printl a and true
+printl a and false

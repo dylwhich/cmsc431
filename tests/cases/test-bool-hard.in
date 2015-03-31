@@ -1,0 +1,1 @@
+printl (1 < 3 and 0.5 > 1.0 or true and false)
