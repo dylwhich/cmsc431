@@ -26,6 +26,7 @@ int yylex();
  void oper_bool_and(enum yytokentype, enum yytokentype);
  void oper_bool_xor(enum yytokentype, enum yytokentype);
  void oper_bool_eq(enum yytokentype, enum yytokentype);
+ void oper_bool_neq(enum yytokentype, enum yytokentype);
  void oper_bool_lt(enum yytokentype, enum yytokentype);
  void oper_bool_le(enum yytokentype, enum yytokentype);
  void oper_bool_gt(enum yytokentype, enum yytokentype);
@@ -70,7 +71,7 @@ int yylex();
 %left BOOL_OR
 %left BOOL_AND
 %left BOOL_XOR
-%left BOOL_EQUAL
+%left BOOL_EQUAL BOOL_NOT_EQUAL
 %left '<' BOOL_LESS_EQUAL '>' BOOL_GREATER_EQUAL
 %left '+' '-'
 %left '*' '/' '%'
@@ -293,6 +294,7 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
 | expr BOOL_AND expr           { $$ = BOOLTYPE; oper_bool_and($1, $3); }
 | expr BOOL_XOR expr           { $$ = BOOLTYPE; oper_bool_xor($1, $3); }
 | expr BOOL_EQUAL expr         { $$ = BOOLTYPE; oper_bool_eq($1, $3); }
+| expr BOOL_NOT_EQUAL expr     { $$ = BOOLTYPE; oper_bool_neq($1, $3); }
 | expr '<' expr                { $$ = BOOLTYPE; oper_bool_lt($1, $3); }
 | expr BOOL_LESS_EQUAL expr    { $$ = BOOLTYPE; oper_bool_le($1, $3); }
 | expr '>' expr                { $$ = BOOLTYPE; oper_bool_gt($1, $3); }
@@ -426,6 +428,13 @@ void oper_bool_eq(enum yytokentype a, enum yytokentype b)  {
   statement_append_instruction(cur_stmt, "mov rcx, QWORD [bool_const_false]");
   cmp_bools(a, b);
   statement_append_instruction(cur_stmt, "cmove rcx, QWORD [bool_const_true]");
+  statement_push(cur_stmt, RCX);
+}
+
+void oper_bool_neq(enum yytokentype a, enum yytokentype b)  {
+  statement_append_instruction(cur_stmt, "mov rcx, QWORD [bool_const_true]");
+  cmp_bools(a, b);
+  statement_append_instruction(cur_stmt, "cmove rcx, QWORD [bool_const_false]");
   statement_push(cur_stmt, RCX);
 }
 

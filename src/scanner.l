@@ -58,6 +58,11 @@
     return BOOL_EQUAL;
 }
 
+"!=" {
+    /* Boolean Not-Equal */
+    return BOOL_NOT_EQUAL;
+}
+
 "<=" {
     /* Boolean Less-Than-Or-Equal */
     return BOOL_LESS_EQUAL;
