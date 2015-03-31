@@ -1,0 +1,4 @@
+printl true and true
+printl true and false
+printl false and true
+printl false and false

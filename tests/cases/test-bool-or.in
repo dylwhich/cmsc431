@@ -1,0 +1,4 @@
+printl true or false
+printl true or true
+printl false or true
+printl false or false
