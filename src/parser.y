@@ -95,8 +95,8 @@ multi-stmt {
 ;
 
 multi-stmt:
-{ cur_stmt = block_add_statement(cur_scope); } stmt ';'
-| multi-stmt { cur_stmt = block_add_statement(cur_scope); } stmt ';'
+{ cur_stmt = block_add_statement(cur_scope); } stmt
+| multi-stmt { cur_stmt = block_add_statement(cur_scope); } stmt
 ;
 
 block:
@@ -105,10 +105,10 @@ block:
 
 stmt:
 block
-| expr
-| declare
-| assign
-| print_stmt
+| expr ';'
+| declare ';'
+| assign ';'
+| print_stmt ';'
 ;
 
 print_stmt:
