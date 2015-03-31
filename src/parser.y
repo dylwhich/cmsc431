@@ -429,7 +429,9 @@ void oper_bool_eq(enum yytokentype a, enum yytokentype b)  {
   statement_push(cur_stmt, RCX);
 }
 
-void oper_bool_lt(enum yytokentype a, enum yytokentype b)  {
+void comparison(enum yytokentype a, enum yytokentype b,
+		const char *cc_int, const char *cc_float) {
+  char tmp[64];
   type_check(a,b);
 
   statement_append_instruction(cur_stmt, "mov rcx, QWORD [bool_const_false]");
@@ -437,7 +439,8 @@ void oper_bool_lt(enum yytokentype a, enum yytokentype b)  {
   case INTTYPE:
   case BOOLTYPE:
     cmp_bools(a, b);
-    statement_append_instruction(cur_stmt, "cmovl rcx, QWORD [bool_const_true]");
+    sprintf(tmp, "cmov%s rcx, QWORD [bool_const_true]", cc_int);
+    statement_append_instruction(cur_stmt, tmp);
     statement_push(cur_stmt, RCX);
     break;
 
@@ -449,31 +452,33 @@ void oper_bool_lt(enum yytokentype a, enum yytokentype b)  {
     statement_stack_align(cur_stmt);
     statement_append_instruction(cur_stmt, "fcomip st1");
     // stack reset might affect rflags? not taking any chances
-    statement_append_instruction(cur_stmt, "cmovb rcx, QWORD [bool_const_true]");
+    sprintf(tmp, "cmov%s rcx, QWORD [bool_const_true]", cc_float);
+    statement_append_instruction(cur_stmt, tmp);
     statement_append_instruction(cur_stmt, "fstp st0 ;clear off fp stack");
     statement_stack_reset(cur_stmt);
 
     statement_append_instruction(cur_stmt, "mov [rsp], rcx");
     break;
   default:
-    statement_append_instruction(cur_stmt, "; this should not happen, fix your shit");
+    statement_append_instruction(cur_stmt, "; UNKNOWN TYPE IN COMPARISON");
     break;
   }
 }
 
-void oper_bool_le(enum yytokentype a, enum yytokentype b)  {
-  cmp_bools(a, b);
+void oper_bool_lt(enum yytokentype a, enum yytokentype b)  {
+  comparison(a, b, "l", "b");
+}
 
+void oper_bool_le(enum yytokentype a, enum yytokentype b)  {
+  comparison(a, b, "le", "be");
 }
 
 void oper_bool_gt(enum yytokentype a, enum yytokentype b)  {
-  cmp_bools(a, b);
-
+  comparison(a, b, "g", "a");
 }
 
 void oper_bool_ge(enum yytokentype a, enum yytokentype b)  {
-  cmp_bools(a, b);
-
+  comparison(a, b, "ge", "ae");
 }
 
 void oper_bool_not(enum yytokentype a)  {
