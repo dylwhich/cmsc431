@@ -1,0 +1,11 @@
+if ( 1 == 0) {
+  printl 13;
+} else {
+  printl 42;
+}
+
+if (true) {
+  printl 27;
+} else {
+  printl -16;
+}

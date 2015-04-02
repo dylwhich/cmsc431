@@ -1,0 +1,11 @@
+if (1 == 2) {
+printl true;
+} else {
+printl false;
+}
+
+if (0 == 0) {
+printl 27;
+} else {
+printl -33;
+}

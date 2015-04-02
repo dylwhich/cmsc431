@@ -1,0 +1,6 @@
+if (false)
+    printl 1;
+else if (false)
+    printl 2;
+else
+    printl 3;

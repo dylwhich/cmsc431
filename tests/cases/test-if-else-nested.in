@@ -1,0 +1,10 @@
+if (true) {
+   printl 1;
+   if (false) {
+     print 0;
+   } else {
+     printl 2;
+   }
+} else {
+   print 0;
+}
