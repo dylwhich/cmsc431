@@ -22,6 +22,9 @@ int yylex();
  void asm_literal_string(const char*);
  void asm_literal_bool(char);
 
+ void if_stmt(struct Block*, struct Statement*,
+	      struct SubBlock*, struct SubBlock*);
+
  void oper_bool_or(enum yytokentype, enum yytokentype);
  void oper_bool_and(enum yytokentype, enum yytokentype);
  void oper_bool_xor(enum yytokentype, enum yytokentype);
@@ -60,6 +63,8 @@ int yylex();
 %token <idval> ID
 %token PRINT
 %token PRINTL
+%token IF
+%token ELSE
 %token <longval> INTTYPE
 %token <floatval> FLOATTYPE
 %token <boolval> BOOLTYPE
@@ -101,6 +106,16 @@ stmt
 
 stmt:
 block
+| {
+  // Add a new statement for the test-expression
+  cur_stmt = block_add_statement(cur_scope);
+} IF '(' expr ')' stmt ELSE stmt {
+  struct SubBlock *last_child = block_get_last_child(cur_scope);
+  if_stmt(cur_scope,
+	  &(subblock_get_prev(subblock_get_prev(last_child))->value.statement),
+	  subblock_get_prev(last_child), last_child);
+}
+//| IF '(' expr ')' stmt
 | { cur_stmt = block_add_statement(cur_scope); } assign ';'
 | { cur_stmt = block_add_statement(cur_scope); } declare ';'
 | { cur_stmt = block_add_statement(cur_scope); } expr ';'
@@ -365,6 +380,22 @@ void cmp_bools(enum yytokentype a, enum yytokentype b) {
   statement_pop(cur_stmt, RDX);
   statement_pop(cur_stmt, RAX);
   statement_append_instruction(cur_stmt, "cmp rax, rdx");
+}
+
+void if_stmt(struct Block *block, struct Statement *test,
+	     struct SubBlock *then_block, struct SubBlock *else_block) {
+  char end_label[64], else_label[64];
+  char end_jmp[64], else_jmp[64];
+
+  if (else_block != NULL) {
+    // if-then-else
+    // Generate unique labels for the else and end labels
+    block_get_unique_name(block, end_label);
+    block_get_unique_name(block, else_label);
+  } else {
+    // if-then
+    block_get_unique_name(block, end_label);
+  }
 }
 
 void oper_bool_or(enum yytokentype a, enum yytokentype b) {

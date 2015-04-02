@@ -103,6 +103,14 @@
     return BOOLTYPE;
 }
 
+"if" {
+    return IF;
+}
+
+"else" {
+    return ELSE;
+}
+
 [a-zA-Z_][a-zA-Z_0-9]* {
     strncpy(yylval.idval, yytext, 63);
     yylval.idval[63] = '\0';

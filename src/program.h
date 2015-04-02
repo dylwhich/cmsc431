@@ -65,6 +65,7 @@ struct Statement {
   char *buffer;
   long realignment;
   struct Block *parent;
+  struct SubBlock *prev, *next;
 };
 
 struct GlobalData {
@@ -73,6 +74,7 @@ struct GlobalData {
   char *data_label;
   long next_data_offset;
   long stack_size;
+  long nonce;
 };
 
 enum SubBlockType {
@@ -90,6 +92,7 @@ struct Block {
   long len_children;
   struct Symbol *symbol_table;
   struct GlobalData *global_data;
+  struct SubBlock *prev, *next;
 };
 
 union SubBlockValue {
@@ -123,11 +126,17 @@ struct Symbol *block_add_symbol_initialized(struct Block *this, const char *name
 					    const char *initial_value);
 struct Symbol *block_resolve_symbol(struct Block *this, const char *name);
 
+struct SubBlock *block_get_last_child(struct Block *this);
 
 void block_destroy(struct Block *this);
 
 // PRIVATE!
 void __block_grow_children(struct Block *this);
+
+void subblock_set_prev(struct SubBlock *this, struct SubBlock *prev);
+struct SubBlock *subblock_get_prev(struct SubBlock *this);
+
+void subblock_set_next(struct SubBlock *this, struct SubBlock *next);
 
 void statement_init(struct Statement *this, struct Block *parent);
 void statement_append_instruction(struct Statement *this,

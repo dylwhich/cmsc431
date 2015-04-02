@@ -19,6 +19,9 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
   this->num_children = 0;
   this->children = malloc(this->len_children * sizeof(struct SubBlock));
 
+  this->prev = NULL;
+  this->next = NULL;
+
   // Keep the global data in sync with all the blocks
   if (block_is_global(this)) {
     this->global_data = malloc(sizeof(struct GlobalData));
@@ -31,6 +34,8 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
     strcpy(this->global_data->data_label, "initglobals");
 
     this->global_data->stack_size = 0;
+
+    this->global_data->nonce = 0;
   } else {
     this->global_data = parent->global_data;
   }
@@ -177,6 +182,12 @@ struct Block *block_add_named_child(struct Block *this, const char *name) {
 
   this->children[this->num_children].type = BLOCK;
   block_init(&(this->children[this->num_children].value.block), tmp, this);
+
+  if (this->num_children != 0) {
+    subblock_set_prev(&(this->children[this->num_children]), &(this->children[this->num_children-1]));
+    subblock_set_next(&(this->children[this->num_children-1]), &(this->children[this->num_children]));
+  }
+
   return &(this->children[this->num_children++].value.block);
 }
 
@@ -187,11 +198,17 @@ struct Statement *block_add_statement(struct Block *this) {
 
   this->children[this->num_children].type = STATEMENT;
   statement_init(&(this->children[this->num_children].value.statement), this);
+
+  if (this->num_children != 0) {
+    subblock_set_prev(&(this->children[this->num_children]), &(this->children[this->num_children-1]));
+    subblock_set_next(&(this->children[this->num_children-1]), &(this->children[this->num_children]));
+  }
+
   return &(this->children[this->num_children++].value.statement);
 }
 
 void block_get_unique_name(struct Block *this, char *out) {
-  sprintf(out, "0_%d", (this->global_data->next_bss_offset + this->global_data->next_data_offset) / 8);
+  sprintf(out, "l0_%lx", this->global_data->nonce++);
 }
 
 struct Symbol *block_add_symbol(struct Block *this, const char *name, struct SymbolType type, struct StorageLocation location) {
@@ -239,6 +256,13 @@ bool block_is_global(struct Block *this) {
   return this->parent == NULL;
 }
 
+struct SubBlock *block_get_last_child(struct Block *this) {
+  if (this->num_children > 0) {
+    return &(this->children[this->num_children-1]);
+  }
+  return NULL;
+}
+
 void block_destroy(struct Block *this) {
   struct SubBlock *child;
   struct Symbol *symbol, *tmp_symbol;
@@ -284,12 +308,38 @@ void __block_grow_children(struct Block *this) {
   }
 }
 
+void subblock_set_prev(struct SubBlock *this, struct SubBlock *prev) {
+  if (this->type == BLOCK) {
+    this->value.block.prev = prev;
+  } else if (this->type == STATEMENT) {
+    this->value.statement.prev = prev;
+  }
+}
+
+struct SubBlock *subblock_get_prev(struct SubBlock *this) {
+  if (this->type == BLOCK) {
+    return this->value.block.prev;
+  } else {
+    return this->value.statement.prev;
+  }
+}
+
+void subblock_set_next(struct SubBlock *this, struct SubBlock *next) {
+  if (this->type == BLOCK) {
+    this->value.block.next = next;
+  } else if (this->type == STATEMENT) {
+    this->value.statement.next = next;
+  }
+}
+
 void statement_init(struct Statement *this, struct Block *parent) {
   // TODO don't hardcode
   this->buffer_size = 512;
   this->buffer = (char*) calloc(this->buffer_size, sizeof(char));
   this->realignment = 0;
   this->parent = parent;
+  this->next = NULL;
+  this->prev = NULL;
 }
 
 void statement_append_instruction(struct Statement *this, const char *asm_instruction) {
