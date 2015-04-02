@@ -1,0 +1,8 @@
+print 1; print 3; print 3; printl 7;
+{print 25;
+
+                              print 6;
+		} print 2;
+
+
+printl 4;
