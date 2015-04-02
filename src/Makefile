@@ -13,7 +13,7 @@ YACC := bison
 # Flags to pass to YACC program
 YFLAGS := -d
 
-CFLAGS := -ggdb -Wall -Wno-switch
+CFLAGS := -ggdb -Wall -Wno-switch -Wno-unused-function
 
 # Link objects and build executable
 Calc: $(objs)
