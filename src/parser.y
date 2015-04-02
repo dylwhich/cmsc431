@@ -108,12 +108,14 @@ stmt:
 block
 | {
   // Add a new statement for the test-expression
+  cur_scope = block_add_child(cur_scope);
   cur_stmt = block_add_statement(cur_scope);
 } IF '(' expr ')' stmt ELSE stmt {
   struct SubBlock *last_child = block_get_last_child(cur_scope);
   if_stmt(cur_scope,
 	  &(subblock_get_prev(subblock_get_prev(last_child))->value.statement),
 	  subblock_get_prev(last_child), last_child);
+  cur_scope = cur_scope->parent;
 }
 //| IF '(' expr ')' stmt
 | { cur_stmt = block_add_statement(cur_scope); } assign ';'
