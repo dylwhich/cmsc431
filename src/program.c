@@ -391,7 +391,7 @@ void statement_pop(struct Statement *this, enum Register regname) {
 
 void statement_push_int(struct Statement *this, long val) {
   char inst[64];
-  sprintf(inst, "push QWORD %d", val);
+  sprintf(inst, "push QWORD %ld", val);
   statement_append_instruction(this, inst);
   this->parent->global_data->stack_size += 8;
 }

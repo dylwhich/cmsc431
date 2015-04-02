@@ -143,6 +143,7 @@ void statement_init(struct Statement *this, struct Block *parent);
 void statement_append_instruction(struct Statement *this,
 				  const char *asm_instruction);
 void statement_push(struct Statement *this, enum Register regname);
+void statement_push_int(struct Statement *this, long val);
 void statement_pop(struct Statement *this, enum Register regname);
 void statement_stack_align(struct Statement *this);
 void statement_stack_reset(struct Statement *this);

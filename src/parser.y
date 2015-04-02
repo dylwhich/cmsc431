@@ -153,7 +153,7 @@ PRINTL expr {
     statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   default:
-    printf("; I DON'T KNOW %d\n", $2);
+    printf("; I DON'T KNOW %ld\n", $2);
     break;
   }
   statement_stack_align(cur_stmt);
@@ -185,7 +185,7 @@ PRINTL expr {
     statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   default:
-    printf("; I DON'T KNOW %d\n", $2);
+    printf("; I DON'T KNOW %ld\n", $2);
     break;
   }
   statement_stack_align(cur_stmt);
