@@ -256,6 +256,14 @@ bool block_is_global(struct Block *this) {
   return this->parent == NULL;
 }
 
+struct SubBlock *block_get_first_child(struct Block *this) {
+  if (this->num_children > 0) {
+    return this->children;
+  } else {
+    return NULL;
+  }
+}
+
 struct SubBlock *block_get_last_child(struct Block *this) {
   if (this->num_children > 0) {
     return &(this->children[this->num_children-1]);
@@ -333,6 +341,8 @@ void subblock_set_next(struct SubBlock *this, struct SubBlock *next) {
 }
 
 void statement_init(struct Statement *this, struct Block *parent) {
+  char tmp[128];
+
   // TODO don't hardcode
   this->buffer_size = 512;
   this->buffer = (char*) calloc(this->buffer_size, sizeof(char));
@@ -340,6 +350,7 @@ void statement_init(struct Statement *this, struct Block *parent) {
   this->parent = parent;
   this->next = NULL;
   this->prev = NULL;
+  this->label[0] = '\0';
 }
 
 void statement_append_instruction(struct Statement *this, const char *asm_instruction) {
@@ -408,6 +419,9 @@ void statement_stack_reset(struct Statement *this) {
 }
 
 void statement_write(struct Statement *this, FILE *out) {
+  if (strlen(this->label)) {
+    fprintf(out, "%s\n", this->label);
+  }
   fprintf(out, "%s", this->buffer);
 }
 

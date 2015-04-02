@@ -382,19 +382,73 @@ void cmp_bools(enum yytokentype a, enum yytokentype b) {
   statement_append_instruction(cur_stmt, "cmp rax, rdx");
 }
 
+struct Statement *recursive_find_first_statement(struct SubBlock *stmt) {
+  if (stmt->type == STATEMENT) {
+    return &(stmt->value.statement);
+  } else if (stmt->type == BLOCK) {
+    return recursive_find_first_statement(block_get_first_child(&(stmt->value.block)));
+  }
+
+  fprintf(stderr, "Unknown block type in recursive find");
+  return NULL;
+}
+
+struct Statement *recursive_find_last_statement(struct SubBlock *stmt) {
+  if (stmt->type == STATEMENT) {
+    return &(stmt->value.statement);
+  } else if (stmt->type == BLOCK) {
+    return recursive_find_last_statement(block_get_last_child(&(stmt->value.block)));
+  }
+
+  fprintf(stderr, "Unknown block type in recursive find");
+  return NULL;
+}
+
 void if_stmt(struct Block *block, struct Statement *test,
 	     struct SubBlock *then_block, struct SubBlock *else_block) {
   char end_label[64], else_label[64];
   char end_jmp[64], else_jmp[64];
+  struct Statement *then_stmt_first, *else_stmt_first,
+    *then_stmt_last, *else_stmt_last;
+
+  then_stmt_first = recursive_find_first_statement(then_block);
+  then_stmt_last = recursive_find_last_statement(then_block);
 
   if (else_block != NULL) {
-    // if-then-else
-    // Generate unique labels for the else and end labels
-    block_get_unique_name(block, end_label);
+    else_stmt_first = recursive_find_first_statement(else_block);
+    else_stmt_last = recursive_find_last_statement(else_block);
+  }
+
+  // Get a label for just after the last clause
+  block_get_unique_name(block, end_label);
+  // We'll use this
+  sprintf(end_jmp, "jmp %s", end_label);
+
+  if (else_block != NULL) {
+    // Get a label for the beginning of the else statement
     block_get_unique_name(block, else_label);
+    sprintf(else_jmp, "jz %s", else_label);
   } else {
-    // if-then
-    block_get_unique_name(block, end_label);
+    strcpy(else_label, end_label);
+    sprintf(else_jmp, "jz %s", end_label);
+  }
+
+  // Change the labels to be the actual labels now
+  strcat(end_label, ":");
+  strcat(else_label, ":");
+
+  // If the condition is not met, jump to the 'else'
+  statement_pop(test, RAX);
+  statement_append_instruction(test, "cmp rax, 0");
+  statement_append_instruction(test, else_jmp);
+
+  if (else_block != NULL) {
+    statement_append_instruction(then_stmt_last, end_jmp);
+
+    strcpy(else_stmt_first->label, else_label);
+    statement_append_instruction(else_stmt_last, end_label);
+  } else {
+    statement_append_instruction(then_stmt_last, else_label);
   }
 }
 

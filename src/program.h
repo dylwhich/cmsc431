@@ -66,6 +66,7 @@ struct Statement {
   long realignment;
   struct Block *parent;
   struct SubBlock *prev, *next;
+  char label[64];
 };
 
 struct GlobalData {
