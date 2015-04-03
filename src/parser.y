@@ -63,8 +63,8 @@ int yylex();
 %token <idval> ID
 %token PRINT
 %token PRINTL
-%token IF
-%token ELSE
+%left IF
+%nonassoc ELSE
 %token <longval> INTTYPE
 %token <floatval> FLOATTYPE
 %token <boolval> BOOLTYPE
@@ -106,7 +106,34 @@ stmt
 
 stmt:
 block
-| {
+| if-else-stmt
+| { cur_stmt = block_add_statement(cur_scope); } assign ';'
+| { cur_stmt = block_add_statement(cur_scope); } declare ';'
+| { cur_stmt = block_add_statement(cur_scope); } expr ';'
+| { cur_stmt = block_add_statement(cur_scope); } print_stmt ';'
+| { cur_stmt = block_add_statement(cur_scope); } ';'
+;
+
+block:
+'{' { cur_scope = block_add_child(cur_scope); }
+multi-stmt { cur_scope = cur_scope->parent; } '}'
+;
+
+if-stmt:
+{
+  cur_scope = block_add_child(cur_scope);
+  cur_stmt = block_add_statement(cur_scope);
+} IF '(' expr ')' stmt {
+  struct SubBlock *last_child = block_get_last_child(cur_scope);
+  if_stmt(cur_scope,
+	  &(subblock_get_prev(last_child)->value.statement),
+	  last_child, NULL);
+  cur_scope = cur_scope->parent;
+}
+;
+
+if-else-stmt:
+{
   // Add a new statement for the test-expression
   cur_scope = block_add_child(cur_scope);
   cur_stmt = block_add_statement(cur_scope);
@@ -117,16 +144,6 @@ block
 	  subblock_get_prev(last_child), last_child);
   cur_scope = cur_scope->parent;
 }
-//| IF '(' expr ')' stmt
-| { cur_stmt = block_add_statement(cur_scope); } assign ';'
-| { cur_stmt = block_add_statement(cur_scope); } declare ';'
-| { cur_stmt = block_add_statement(cur_scope); } expr ';'
-| { cur_stmt = block_add_statement(cur_scope); } print_stmt ';'
-;
-
-block:
-'{' { cur_scope = block_add_child(cur_scope); }
-multi-stmt { cur_scope = cur_scope->parent; } '}'
 ;
 
 print_stmt:
