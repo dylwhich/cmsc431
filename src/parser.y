@@ -22,6 +22,8 @@ int yylex();
  void asm_literal_string(const char*);
  void asm_literal_bool(char);
 
+ struct Statement *recursive_find_first_statement(struct SubBlock*);
+ struct Statement *recursive_find_last_statement(struct SubBlock*);
  void if_stmt(struct Block*, struct Statement*,
 	      struct SubBlock*, struct SubBlock*);
  void while_loop(struct Block*, struct Statement*, struct SubBlock*);
