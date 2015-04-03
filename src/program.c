@@ -50,6 +50,7 @@ void block_write(struct Block *this, FILE *out) {
 void block_write_head(struct Block *this, FILE *out) {
   struct Symbol *symbol;
   struct SubBlock *child;
+  fprintf(out, "; block_head: %s\n", this->name);
 
   if (block_is_global(this)) {
     // BEGIN HACK
@@ -100,6 +101,11 @@ void block_write_head(struct Block *this, FILE *out) {
 
 void block_write_body(struct Block *this, FILE *out) {
   struct SubBlock *child;
+  fprintf(out, "; block_body: %s\n", this->name);
+
+  if (this->parent != NULL) {
+    fprintf(out, ";;; (n)th child block of parent %s\n", this->parent->name);
+  }
 
   if (block_is_global(this)) {
     fprintf(out, "    SECTION .text:\n");
@@ -146,10 +152,16 @@ void block_write_body(struct Block *this, FILE *out) {
       statement_write(&child->value.statement, out);
     }
   }
+
+  fprintf(out, ";end block_body %s\n", this->name);
+  if (this->parent != NULL) {
+    fprintf(out, ";return to parent %s\n", this->parent->name);
+  }
 }
 
 void block_write_tail(struct Block *this, FILE *out) {
   struct SubBlock *child;
+  fprintf(out, "; block_tail: %s\n", this->name);
   for (child = this->children; child < (this->children + this->num_children); child++) {
     if (child->type == BLOCK) {
       block_write_tail(&(child->value.block), out);
@@ -351,6 +363,9 @@ void statement_init(struct Statement *this, struct Block *parent) {
   this->next = NULL;
   this->prev = NULL;
   this->label[0] = '\0';
+
+  sprintf(tmp, ";;; %ldth child stmt of parent %s", parent->num_children, parent->name);
+  statement_append_instruction(this, tmp);
 }
 
 void statement_append_instruction(struct Statement *this, const char *asm_instruction) {
@@ -419,10 +434,14 @@ void statement_stack_reset(struct Statement *this) {
 }
 
 void statement_write(struct Statement *this, FILE *out) {
+  fprintf(out, "; statement-begin\n");
+
   if (strlen(this->label)) {
     fprintf(out, "%s\n", this->label);
   }
+
   fprintf(out, "%s", this->buffer);
+  fprintf(out, "; statement-end\n");
 }
 
 void statement_destroy(struct Statement *this) {
