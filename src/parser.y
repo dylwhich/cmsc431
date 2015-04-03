@@ -395,10 +395,10 @@ void asm_literal_string(const char *str) {
   char tmp[64], tmp2[64];
   struct Symbol *symbol;
 
-  statement_append_instruction(cur_stmt, ";;+asm_literal_string\n");
+  statement_append_instruction(cur_stmt, ";;+asm_literal_string");
 
-  block_get_unique_name(cur_scope, tmp);
-  symbol = block_add_symbol_initialized(cur_scope, tmp, STRINGTYPE, str);
+  block_get_unique_name(&global_scope, tmp);
+  symbol = block_add_symbol_initialized(&global_scope, tmp, STRINGTYPE, str);
 
   symbol_get_reference(symbol, tmp);
   sprintf(tmp2, "lea rax, %s", tmp);
@@ -406,7 +406,7 @@ void asm_literal_string(const char *str) {
   statement_append_instruction(cur_stmt, tmp2);
   statement_push(cur_stmt, RAX);
 
-  statement_append_instruction(cur_stmt, ";;-asm_literal_string\n");
+  statement_append_instruction(cur_stmt, ";;-asm_literal_string");
 }
 
 void asm_literal_bool(char val) {
