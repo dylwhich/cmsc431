@@ -24,6 +24,7 @@ int yylex();
 
  void if_stmt(struct Block*, struct Statement*,
 	      struct SubBlock*, struct SubBlock*);
+ void while_loop(struct Block*, struct Statement*, struct SubBlock*);
 
  void oper_bool_or(enum yytokentype, enum yytokentype);
  void oper_bool_and(enum yytokentype, enum yytokentype);
@@ -65,6 +66,7 @@ int yylex();
 %token PRINTL
 %left IF
 %nonassoc ELSE
+%token WHILE
 %token <longval> INTTYPE
 %token <floatval> FLOATTYPE
 %token <boolval> BOOLTYPE
@@ -107,6 +109,7 @@ stmt
 stmt:
 block
 | if-else-stmt
+| while-loop
 | { cur_stmt = block_add_statement(cur_scope); } assign ';'
 | { cur_stmt = block_add_statement(cur_scope); } declare ';'
 | { cur_stmt = block_add_statement(cur_scope); } expr ';'
@@ -117,6 +120,19 @@ block
 block:
 '{' { cur_scope = block_add_child(cur_scope); }
 multi-stmt { cur_scope = cur_scope->parent; } '}'
+;
+
+while-loop:
+{
+  // Add a new statement for the test-expression
+  cur_scope = block_add_child(cur_scope);
+  cur_stmt = block_add_statement(cur_scope);
+} WHILE '(' expr ')' stmt {
+  struct SubBlock *last_child = block_get_last_child(cur_scope);
+  while_loop(cur_scope, &(subblock_get_prev(last_child)->value.statement),
+	     last_child);
+  cur_scope = cur_scope->parent;
+}
 ;
 
 if-stmt:
@@ -469,6 +485,34 @@ void if_stmt(struct Block *block, struct Statement *test,
   } else {
     statement_append_instruction(then_stmt_last, else_label);
   }
+}
+
+void while_loop(struct Block *block, struct Statement *test,
+		struct SubBlock *stmt) {
+  struct Statement *last_stmt;
+  char done_label[64], test_label[64],
+    done_jmp[64], test_jmp[64];
+
+  block_get_unique_name(block, test_label);
+  block_get_unique_name(block, done_label);
+
+  // We want to do the whole comparison every time
+  sprintf(test->label, "%s:", test_label);
+
+  sprintf(test_jmp, "jmp %s", test_label);
+  sprintf(done_jmp, "jz %s", done_label);
+
+  strcat(test_label, ":");
+  strcat(done_label, ":");
+
+  last_stmt = recursive_find_last_statement(stmt);
+
+  statement_pop(test, RAX);
+  statement_append_instruction(test, "cmp rax, 0");
+  statement_append_instruction(test, done_jmp);
+
+  statement_append_instruction(last_stmt, test_jmp);
+  statement_append_instruction(last_stmt, done_label);
 }
 
 void oper_bool_or(enum yytokentype a, enum yytokentype b) {
