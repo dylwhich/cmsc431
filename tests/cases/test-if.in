@@ -1,0 +1,19 @@
+if (true)
+  printl 1;
+else;
+
+printl 5;
+
+if (false)
+  printl 6;
+else;
+
+printl 7;
+
+if (true) {
+  printl 8;
+  printl 9;
+} else;
+
+printl 10;
+printl 11;
