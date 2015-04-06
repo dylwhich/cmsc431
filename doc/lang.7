@@ -4,7 +4,7 @@
 Uncode \- A language created for the Compilers class
 .
 .SH DESCRIPTION
-This language resembles something close to Python 2. This language is
+This language resembles something close to C-ish. This language is
 compiled to the x86_64 assembly language with the
 .B Proj2
 compiler, from which an executable program can be assembled and linked using
@@ -14,8 +14,9 @@ and
 respectively.
 
 .P 
-The language supports basic integer and floating-point arithmetic, as well
-as variables of each type, and print statements.
+The language supports basic integer and floating-point arithmetic, as
+well as variables of each type, and print statements. Each of these
+must be suffixed with a semicolon. All whitespace is ignored.
 .
 .SH LANGUAGE
 .SS Mathematical Operations
@@ -49,6 +50,30 @@ Addition. Same precedence as subtraction.
 .TP
 expression - expression
 Subtraction. Same precedence as addition.
+
+.SS Boolean Operations
+The following boolean logic operations are supported. Any value not
+equal to zero is treated as true, and zero is treated as false.
+.TP
+true
+The logical value true.
+.TP
+false
+The logic value false.
+.TP
+expression and expression
+true if both expressions evaluate to true, and false otherwise.
+.TP
+expression xor expression
+true if exactly one of the expressions evaluates to true, and false
+otherwise.
+.TP
+expression or expression
+true if either expression evaluates to true, and false otherwise.
+.TP
+!expression
+true if expression evaluates to false, and false otherwise.
+
 .
 .SS Variables
 The language supports an arbitrary number of integer and
@@ -74,8 +99,8 @@ Prints stmt without a trailing newline. The statement may be an integer
 or a floating-point expression.
 .TP
 printl stmt
-Prints stmt with a trailing newline. The statement may be an integer or
-a floating-point expression
+Prints stmt with a trailing newline. The statement may be an integer,
+a floating-point expression, or a boolean value.
 .
 .SS Input Statements
 The language also supports two input statements, for both integer and
@@ -86,16 +111,33 @@ Reads an integer from stdin and returns it.
 .TP
 readfloat
 Reads a float from stdin and returns it.
+
+.SS If-Else Statements
+The language support conditional execution of one or more statements.
+.TP
+if (expr) { stmt1; ...; } else { stmt2; ...; }
+.TP
+if (expr) stmt1; else stmt2;
+Executes stmt1 if expr evaluates to a nonzero value, or executes stmt2
+if expr is zero.
+
+.SS While Loops
+The language supports while loops.
+.TP
+while (expr) { stmt; ...; }
+.TP
+while (expr) stmt;
+Executes stmt until expr evaluates to zero.
 .
 .SH LIMITATIONS
-.IP \(bu
-A newline is required after each mathematical expression.
-.IP \(bu
-Newlines may not be present within the expression.
 .IP \(bu
 String literals may not exceed 63 characters in length.
 .IP \(bu
 String literals cannot contain escaped quotes.
+.IP \(bu
+Printing multiple string literals may result in undefined behavior.
+.IP \(bu
+If statements must be followed by else statements.
 .
 .SH AUTHOR
 Dylan Whichard <dylwhich@umbc.edu>
