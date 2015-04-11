@@ -1,24 +1,18 @@
-Project 1
+Project 4
 
-Name: 
+Name: Dylan Whichard (dylwhich)
 ===============================================================================
 
 Correctness/Completeness (55%)
-     (3 pts) Compiler includes print statements
-     (4 pts) Compiler includes 2 versions of print statements -
-             newline and no newline
-    (10 pts) Floating point math works correctly (addition, subtraction,
-             multiplication, division, exponentiation, negation)
--2   (4 pts) Compiler correctly prints integer and float math expressions
-     (5 pts) Compiler includes declaration statements
-     (5 pts) Integer and floating point variables can be declared
-     (4 pts) Compiler correctly recognizes variable redeclarations
-     (5 pts) Compiler includes assignment statements
-     (5 pts) Variable values are correctly updated in assignments
-     (5 pts) Type checking is correctly performed in assignments statements
-             and expressions
-     (5 pts) Variables can be included in math expressions
-    
+     (4 pts) Boolean type and constants for true and false are included in
+             the language (not represented as 0 or 1 in code)
+     (8 pts) Boolean operations NOT, OR and AND are supported
+     (2 pts) Boolean values are printable (printing 0 or 1 is fine)
+    (10 pts) Integer comparisons are correctly supported
+    (10 pts) Floating point comparisons are correctly supported
+     (7 pts) If statements are correctly supported
+     (7 pts) While loops are correctly supported
+     (7 pts) Conditional structures can be arbitrarily nested and mixed
 
 Testing (30%)
      (5 pts) "Easy" testcase
@@ -40,14 +34,11 @@ Documentation (10%)
 
 Comments:
 
-Higher level documentation for functions might be helpful. I was able to 
-figure out what they do from their names though.
-
-Printing floating point values produces a "mismatch in operand sizes" error 
-when the code is assembled on the GL servers. Changing the "movlps" 
-instructions to "movq" instructions seemed to fix it. 
-All other functionality looks great!
+Bison on the GL servers doesn't support hyphens in the names of grammar
+symbols - consider replacing these with underscores. Assuming those were to
+be replaced, everything would work perfectly. Test cases are good. Code
+and documentation look good too. Well done!
 
 ===============================================================================
 
-Total Score: 98/100
+Total Score: 100/100
