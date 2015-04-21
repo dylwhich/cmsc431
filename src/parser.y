@@ -258,7 +258,7 @@ INTTYPE ID {
     yyerror("Double declaration invalid");
   }
 
-  sl.type = PRIMITIVE;
+  st.type = PRIMITIVE;
   st.value.primitive = FLOATTYPE;
 
   sl.type = LABEL;
