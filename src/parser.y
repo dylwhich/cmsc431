@@ -445,10 +445,9 @@ void if_stmt(struct Block *block, struct Statement *test,
 	     struct SubBlock *then_block, struct SubBlock *else_block) {
   char end_label[64], else_label[64];
   char end_jmp[64], else_jmp[64];
-  struct Statement *then_stmt_first, *else_stmt_first,
+  struct Statement *else_stmt_first,
     *then_stmt_last, *else_stmt_last;
 
-  then_stmt_first = recursive_find_first_statement(then_block);
   then_stmt_last = recursive_find_last_statement(then_block);
 
   if (else_block != NULL) {

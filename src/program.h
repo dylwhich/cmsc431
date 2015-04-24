@@ -127,6 +127,8 @@ struct Symbol *block_add_symbol_initialized(struct Block *this, const char *name
 					    const char *initial_value);
 struct Symbol *block_resolve_symbol(struct Block *this, const char *name);
 
+struct SubBlock *block_get_first_child(struct Block *this);
+
 struct SubBlock *block_get_last_child(struct Block *this);
 
 void block_destroy(struct Block *this);
