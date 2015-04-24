@@ -96,7 +96,7 @@ start: {
   block_init(&global_scope, "global", NULL);
   cur_scope = &global_scope;
  }
-multi-stmt {
+multi_stmt {
   block_write(&global_scope, stdout);
   block_destroy(&global_scope);
   cur_scope = NULL;
@@ -110,21 +110,21 @@ stmt
 
 stmt:
 block
-| if-else-stmt
-| while-loop
-| { cur_stmt = block_add_statement(cur_scope); } assign ';'
-| { cur_stmt = block_add_statement(cur_scope); } declare ';'
-| { cur_stmt = block_add_statement(cur_scope); } expr ';'
+| if_else_stmt
+| while_loop
 | { cur_stmt = block_add_statement(cur_scope); } print_stmt ';'
+| { cur_stmt = block_add_statement(cur_scope); } declare ';'
+| { cur_stmt = block_add_statement(cur_scope); } assign ';'
+| { cur_stmt = block_add_statement(cur_scope); } expr ';'
 | { cur_stmt = block_add_statement(cur_scope); } ';'
 ;
 
 block:
 '{' { cur_scope = block_add_child(cur_scope); }
-multi-stmt { cur_scope = cur_scope->parent; } '}'
+multi_stmt { cur_scope = cur_scope->parent; } '}'
 ;
 
-while-loop:
+while_loop:
 {
   // Add a new statement for the test-expression
   cur_scope = block_add_child(cur_scope);
@@ -137,7 +137,7 @@ while-loop:
 }
 ;
 
-if-stmt:
+/*if-stmt:
 {
   cur_scope = block_add_child(cur_scope);
   cur_stmt = block_add_statement(cur_scope);
@@ -148,9 +148,9 @@ if-stmt:
 	  last_child, NULL);
   cur_scope = cur_scope->parent;
 }
-;
+;*/
 
-if-else-stmt:
+if_else_stmt:
 {
   // Add a new statement for the test-expression
   cur_scope = block_add_child(cur_scope);
