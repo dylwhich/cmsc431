@@ -203,28 +203,35 @@ PRINTL expr {
   statement_stack_reset(cur_stmt);
 }
 | PRINT expr {
-  statement_call_setup(cur_stmt);
   switch ($2) {
   case INTTYPE:
-    statement_call_arg_hacky(cur_stmt, 0, "fmt_decimal");
-    statement_call_arg_hacky(cur_stmt, 0, "QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov rdi, fmt_decimal");
+    statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   case FLOATTYPE:
-    statement_call_arg_hacky(cur_stmt, 0, "fmt_float");
-    statement_call_arg_hacky(cur_stmt, 1, "QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "movq xmm0, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov al, 1");
+    statement_append_instruction(cur_stmt, "mov rdi, fmt_float");
     break;
   case STRINGTYPE:
-    statement_call_arg_hacky(cur_stmt, 0, "fmt_string");
-    statement_call_arg_hacky(cur_stmt, 0, "QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp]");
+    statement_append_instruction(cur_stmt, "mov rdi, fmt_string");
+    statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   case BOOLTYPE:
-    statement_call_arg_hacky(cur_stmt, 0, "rbx");
+    statement_append_instruction(cur_stmt, "mov rdi, bool_str_true");
+    statement_append_instruction(cur_stmt, "mov rax, bool_str_false");
+    statement_append_instruction(cur_stmt, "cmp QWORD [rsp], QWORD 0");
+    statement_append_instruction(cur_stmt, "cmovz rdi, rax");
+    statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   default:
     printf("; I DON'T KNOW %ld\n", $2);
     break;
   }
-  statement_call_finish(cur_stmt, "printf");
+  statement_stack_align(cur_stmt);
+  statement_append_instruction(cur_stmt, "call printf");
   statement_stack_reset(cur_stmt);
 }
 ;
@@ -243,7 +250,7 @@ INTTYPE ID {
   st.type = PRIMITIVE;
   st.value.primitive = INTTYPE;
 
-  sl.type = LOCAL;
+  sl.type = LABEL;
 
   block_add_symbol(cur_scope, $2, st, sl);
 }
@@ -274,7 +281,7 @@ INTTYPE ID {
   st.type = PRIMITIVE;
   st.value.primitive = BOOLTYPE;
 
-  sl.type = LOCAL;
+  sl.type = LABEL;
 
   block_add_symbol(cur_scope, $2, st, sl);
 }
@@ -329,9 +336,6 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
 
   $$ = FLOATTYPE;
 }
-| func_call {
-  $$ = INTTYPE;
-}
 | ID {
   char ref[64];
   char inst[80];
@@ -364,7 +368,7 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
 | expr '*' expr   { type_check($1, $3); $$ = $3; oper_mul($$); }
 | expr '/' expr   { type_check($1, $3); $$ = $3; oper_div($$); }
 | expr '%' expr   { type_check($1, $3); $$ = $3; oper_mod($$); }
-| UMINUS expr        { $$ = $2; oper_neg($$); }
+| '-' expr        { $$ = $2; oper_neg($$); }
 | '!' expr        { $$ = BOOLTYPE; oper_bool_not($2); }
 | expr POW expr   { type_check($1, $3); $$ = $3; oper_pow($$); }
 | '(' expr ')'    { $$ = $2; }

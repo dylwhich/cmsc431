@@ -15,16 +15,13 @@ enum StorageLocationType {
   LABEL,
   ADDRESS,
   INITIALIZED,
-  REGISTER,
-  LOCAL
+  REGISTER
 };
 
 enum Register {
-  RAX = 0, RBX, RCX, RDX, RSI, RDI,
+  RAX, RBX, RCX, RDX, RSI, RDI,
   R8, R9, R10, R11, R12,
-  R13, R14, R15,
-  XMM0, XMM1, XMM2, XMM3,
-  XMM4, XMM5, XMM6, XMM7,
+  R13, R14, R15
 };
 
 union StorageLocationValue {
@@ -37,20 +34,14 @@ struct StorageLocation {
   union StorageLocationValue value;
 };
 
-struct Function {
-  enum yytokentype return_type;
-};
-
 enum SymbolTypeType {
   PRIMITIVE,
-  USER,
-  FUNCTION,
+  USER
 };
 
 union SymbolTypeValue {
   struct Symbol *user;
   enum yytokentype primitive;
-  struct Function *function;
 };
 
 struct SymbolType {
@@ -76,9 +67,6 @@ struct Statement {
   struct Block *parent;
   struct SubBlock *prev, *next;
   char label[64];
-  long int_regs_used[32];
-  long float_regs_used[32];
-  long call_stack_index;
 };
 
 struct GlobalData {
@@ -106,7 +94,6 @@ struct Block {
   struct Symbol *symbol_table;
   struct GlobalData *global_data;
   struct SubBlock *prev, *next;
-  long registers[32];
 };
 
 union SubBlockValue {
@@ -144,14 +131,6 @@ struct SubBlock *block_get_first_child(struct Block *this);
 
 struct SubBlock *block_get_last_child(struct Block *this);
 
-enum Register block_register_acquire_int(struct Block *this);
-
-enum Register block_register_acquire_float(struct Block *this);
-
-long block_register_used(struct Block *this, enum Register reg);
-
-void block_register_release(struct Block *this, enum Register reg);
-
 void block_destroy(struct Block *this);
 
 // PRIVATE!
@@ -168,11 +147,6 @@ void statement_append_instruction(struct Statement *this,
 void statement_push(struct Statement *this, enum Register regname);
 void statement_push_int(struct Statement *this, long val);
 void statement_pop(struct Statement *this, enum Register regname);
-void statement_call_setup(struct Statement *this);
-void statement_call_arg(struct Statement *this, struct Symbol *arg);
-void statement_call_arg_hacky(struct Statement *this, long is_float,
-			      const char *argloc);
-void statement_call_finish(struct Statement *this, const char *func);
 void statement_stack_align(struct Statement *this);
 void statement_stack_reset(struct Statement *this);
 void statement_write(struct Statement *this, FILE *out);
