@@ -1,18 +1,15 @@
-Project 4
+Project 5
 
-Name: Dylan Whichard (dylwhich)
+Name: Dylan Whichard (dylwhich) 
 ===============================================================================
 
 Correctness/Completeness (55%)
-     (4 pts) Boolean type and constants for true and false are included in
-             the language (not represented as 0 or 1 in code)
-     (8 pts) Boolean operations NOT, OR and AND are supported
-     (2 pts) Boolean values are printable (printing 0 or 1 is fine)
-    (10 pts) Integer comparisons are correctly supported
-    (10 pts) Floating point comparisons are correctly supported
-     (7 pts) If statements are correctly supported
-     (7 pts) While loops are correctly supported
-     (7 pts) Conditional structures can be arbitrarily nested and mixed
+-10 (10 pts) Procedure definitions are correctly supported
+-10 (10 pts) Parameter passing is correctly supported
+-5   (5 pts) Return statements are correctly supported
+-10 (10 pts) Procedure invocation is correctly supported
+-10 (10 pts) Local scoping is correctly supported
+-10 (10 pts) Recursion is correctly supported
 
 Testing (30%)
      (5 pts) "Easy" testcase
@@ -34,11 +31,11 @@ Documentation (10%)
 
 Comments:
 
-Bison on the GL servers doesn't support hyphens in the names of grammar
-symbols - consider replacing these with underscores. Assuming those were to
-be replaced, everything would work perfectly. Test cases are good. Code
-and documentation look good too. Well done!
+Looking forward to seeing everything work.
+
+Once you get everything working, resubmit and let me know so I can regrade it
+and put the proper points into Project 5. 
 
 ===============================================================================
 
-Total Score: 100/100
+Total Score: 45/100
