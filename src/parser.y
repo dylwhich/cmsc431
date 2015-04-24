@@ -103,9 +103,14 @@ multi_stmt {
 }
 ;
 
-multi-stmt:
-stmt
-| multi-stmt stmt
+multi_stmt:
+%empty
+| multi_stmt stmt
+;
+
+arg_list:
+%empty
+| arg_list ',' expr
 ;
 
 stmt:
