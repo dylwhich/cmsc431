@@ -124,6 +124,15 @@ block
 | { cur_stmt = block_add_statement(cur_scope); } ';'
 ;
 
+func_call:
+ID '(' arg_list ')' {
+  printf(";;;it happened\n");
+  asm_literal_int(3);
+  //  $$ = block_resolve_symbol(cur_scope, $1)->type.value.function->return_type;
+  //$$ = LONGVAL;
+}
+;
+
 block:
 '{' { cur_scope = block_add_child(cur_scope); }
 multi_stmt { cur_scope = cur_scope->parent; } '}'
