@@ -6,7 +6,12 @@
 #include <string.h>
 #include <alloca.h>
 
+static enum Register ARG_REGISTERS_INT[] = {RDI, RSI, RDX, RCX, R8, R9};
+static enum Register ARG_REGISTERS_FLOAT[] = {XMM0, XMM1, XMM2, XMM3,
+					      XMM4, XMM5, XMM6, XMM7};
+
 void block_init(struct Block *this, const char *name, struct Block *parent) {
+  enum Register i;
   this->symbol_table = NULL;
 
   this->name = (char*) malloc(sizeof(char) * (strlen(name) + 1));
@@ -38,6 +43,10 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
     this->global_data->nonce = 0;
   } else {
     this->global_data = parent->global_data;
+  }
+
+  for (i = RAX; i <= XMM7; i++) {
+    this->registers[i] = 0;
   }
 };
 
@@ -241,6 +250,7 @@ struct Symbol *block_add_symbol_initialized(struct Block *this, const char *name
   st.value.primitive = type;
 
   // TODO: don't hardcode
+  // TODO: Support non-global initialization
   symbol_init(symbol, st, this->global_data->next_data_offset, 8, this, name);
   this->global_data->next_data_offset += 8;
 
@@ -281,6 +291,38 @@ struct SubBlock *block_get_last_child(struct Block *this) {
     return &(this->children[this->num_children-1]);
   }
   return NULL;
+}
+
+enum Register block_register_acquire_int(struct Block *this) {
+  enum Register r;
+  for (r = RAX; r <= R15; r++) {
+    if (!this->registers[r]) {
+      this->registers[r] = 1;
+      return r;
+    }
+  }
+
+  return -1;
+}
+
+enum Register block_register_acquire_float(struct Block *this) {
+  enum Register r;
+  for (r = XMM0; r <= XMM7; r++) {
+    if (!this->registers[r]) {
+      this->registers[r] = 1;
+      return r;
+    }
+  }
+
+  return -1;
+}
+
+long block_register_used(struct Block *this, enum Register reg) {
+  return this->registers[reg];
+}
+
+void block_register_release(struct Block *this, enum Register reg) {
+  this->registers[reg] = 0;
 }
 
 void block_destroy(struct Block *this) {
@@ -363,6 +405,7 @@ void statement_init(struct Statement *this, struct Block *parent) {
   this->next = NULL;
   this->prev = NULL;
   this->label[0] = '\0';
+  this->call_stack_index = -1;
 
   sprintf(tmp, ";;; %ldth child stmt of parent %s", parent->num_children, parent->name);
   statement_append_instruction(this, tmp);
@@ -398,10 +441,83 @@ void statement_push(struct Statement *this, enum Register regname) {
 
 void statement_pop(struct Statement *this, enum Register regname) {
   char reg[8], inst[64];
+  this->parent->registers[regname] = 1;
   register_get_name(regname, reg);
   sprintf(inst, "pop QWORD %s", reg);
   statement_append_instruction(this, inst);
   this->parent->global_data->stack_size -= 8;
+}
+
+void statement_call_setup(struct Statement *this) {
+  enum Register i;
+  // stores the current frame's values
+  for (i = RBX; i <= R15; i++) {
+    if (this->parent->registers[i]) {
+      statement_push(this, i);
+    }
+  }
+
+  statement_append_instruction(this, "xor rax, rax");
+  this->call_stack_index++;
+}
+
+void statement_call_arg(struct Statement *this, struct Symbol *arg) {
+  char argloc[64];
+  symbol_get_reference(arg, argloc);
+
+  if (arg->type.type == PRIMITIVE && arg->type.value.primitive == FLOATTYPE) {
+    statement_call_arg_hacky(this, 1, argloc);
+  } else {
+    statement_call_arg_hacky(this, 0, argloc);
+  }
+}
+
+void statement_call_arg_hacky(struct Statement *this, long is_float, const char *src) {
+  char regname[32], inst[64];
+  char *mov_op;
+  enum Register used_reg;
+
+  if (is_float) {
+    statement_append_instruction(this, "add al, 1");
+    used_reg = ARG_REGISTERS_FLOAT[this->float_regs_used[this->call_stack_index]++];
+    mov_op = "movq";
+  } else {
+    used_reg = ARG_REGISTERS_INT[this->int_regs_used[this->call_stack_index]++];
+    mov_op = "mov";
+  }
+
+  if (used_reg == -1) {
+    statement_append_instruction(this, ";;;;=== Too many registers used??? register_acquire == -1");
+  }
+
+  // Does not account for moving a register to itself...
+  register_get_name(used_reg, regname);
+  sprintf(inst, "%s %s, %s", mov_op, regname, src);
+  statement_append_instruction(this, inst);
+}
+
+void statement_call_finish(struct Statement *this, const char *func) {
+  char out[128];
+  enum Register i;
+
+  statement_stack_align(this);
+
+  sprintf(out, "call %s", func);
+  statement_append_instruction(this, out);
+  //  statement_push(this, RAX); // right thing to do?
+
+  statement_stack_reset(this);
+
+  // stores the current frame's values
+  for (i = R15; i > RAX; i--) {
+    if (this->parent->registers[i]) {
+      statement_pop(this, i);
+    }
+  }
+
+  statement_push(this, RAX);
+
+  this->call_stack_index--;
 }
 
 void statement_push_int(struct Statement *this, long val) {
@@ -699,6 +815,11 @@ void symbol_write_declaration(struct Symbol *this, FILE *out) {
     fprintf(out, "; You should probably fix symbol_write_declaration\n");
     break;
 
+  case LOCAL:
+    fprintf(out, ";;; declaring local\n");
+    fprintf(out, "add rsp, %ld\n", this->size);
+    break;
+
   case REGISTER:
     // I'm pretty sure we don't have to do anything here
     break;
@@ -731,6 +852,10 @@ void symbol_write_reference(struct Symbol *this, FILE *out) {
     fprintf(out, "qword [%ld]", this->location.value.address);
     break;
 
+  case LOCAL:
+    fprintf(out, "qword [rbp+%ld]", this->location.value.address);
+    break;
+
   case REGISTER:
     register_write_name(this->location.value.regname, out);
     break;
@@ -752,6 +877,10 @@ void symbol_get_reference(struct Symbol *this, char *out) {
 
   case ADDRESS:
     sprintf(out, "qword [%ld]", this->location.value.address);
+    break;
+
+  case LOCAL:
+    sprintf(out, "qword [rbp+%ld]", this->location.value.address);
     break;
 
   case REGISTER:
