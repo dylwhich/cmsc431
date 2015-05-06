@@ -67,6 +67,7 @@ int yylex();
 %token PRINT
 %token PRINTL
 %token NOP
+%token VOID
 %left IF
 %nonassoc ELSE
 %token WHILE
@@ -109,10 +110,17 @@ multi_stmt:
 | multi_stmt stmt
 ;
 
-arg_list:
+multi_expr:
 %empty
-| arg_list ',' expr
+| { printf("it's happeninng!!\n");}multi_expr expr ','
 ;
+
+arg_list:
+'(' multi_expr ')'
+| '(' VOID ')'
+;
+
+//func_call: ID '(' arg_list ')';
 
 stmt:
 block
@@ -123,6 +131,7 @@ block
 | { cur_stmt = block_add_statement(cur_scope); } assign ';'
 | { cur_stmt = block_add_statement(cur_scope); } expr ';'
 | NOP { cur_stmt = block_add_statement(cur_scope); } ';'
+| arg_list {printf(";;aaaaa\n"); cur_stmt = block_add_statement(cur_scope); } ';'
 ;
 
 block:

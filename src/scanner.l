@@ -33,6 +33,10 @@
   return BOOL;
 }
 
+"void" {
+  return VOID;
+}
+
 "**" {
     /* Exponentiation operator */
     return POW;
