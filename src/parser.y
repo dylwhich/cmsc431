@@ -136,8 +136,6 @@ param_list:
 | '(' VOID ')'
 | '(' ')';
 
-func_call: '.' ID arg_list;
-
 func_decl: FUNCDEF ID param_list stmt;
 
 stmt:
@@ -148,7 +146,27 @@ block
 | { cur_stmt = block_add_statement(cur_scope); } declare ';'
 | { cur_stmt = block_add_statement(cur_scope); } func_decl
 | { cur_stmt = block_add_statement(cur_scope); } expr ';'
-| func_call {printf(";;aaaaa\n"); cur_stmt = block_add_statement(cur_scope); } ';'
+| '.' ID {
+  char ref[64];
+  struct Symbol *target = block_resolve_symbol(cur_scope, $2);
+  cur_stmt = block_add_statement(cur_scope);
+
+  printf(";; Calling function %s\n", $2);
+
+  if (target == NULL) {
+    yyerror("Unknown identifier");
+  } else {
+    if (target->type.type == PRIMITIVE) {
+      if (target->type.value.primitive != FUNCTYPE) {
+	yyerror("Incompatible types");
+      } else {
+	symbol_get_reference(target, ref);
+	statement_call_setup(cur_stmt);
+      }
+    }
+  }
+}
+arg_list {printf(";;aaaaa\n"); } ';'
 | NOP { cur_stmt = block_add_statement(cur_scope); } ';'
 ;
 
@@ -358,9 +376,6 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
   statement_append_instruction(cur_stmt, "call scanf");
 
   $$ = FLOATTYPE;
-}
-| func_call {
-  $$ = INTTYPE;
 }
 | assign { $$ = $1; }
 | ID {
