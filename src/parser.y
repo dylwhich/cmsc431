@@ -146,7 +146,6 @@ block
 | while_loop
 | { cur_stmt = block_add_statement(cur_scope); } print_stmt ';'
 | { cur_stmt = block_add_statement(cur_scope); } declare ';'
-| { cur_stmt = block_add_statement(cur_scope); } assign ';'
 | { cur_stmt = block_add_statement(cur_scope); } func_decl
 | { cur_stmt = block_add_statement(cur_scope); } expr ';'
 | func_call {printf(";;aaaaa\n"); cur_stmt = block_add_statement(cur_scope); } ';'
@@ -327,6 +326,8 @@ ID '=' expr {
 	sprintf(inst, "mov %s, rax; %s = <stmt>", ref, target->label);
 	statement_pop(cur_stmt, RAX);
 	statement_append_instruction(cur_stmt, inst);
+
+	$$ = $3;
       }
     }
   }
@@ -361,6 +362,7 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
 | func_call {
   $$ = INTTYPE;
 }
+| assign { $$ = $1; }
 | ID {
   char ref[64];
   char inst[80];
