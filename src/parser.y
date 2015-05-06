@@ -63,6 +63,7 @@ int yylex();
 %token <floatval> FLOAT
 %token <boolval> BOOL
 %token <stringval> STRING
+%token <stringval> FUNCDEF
 %token <idval> ID
 %token PRINT
 %token PRINTL
@@ -75,6 +76,7 @@ int yylex();
 %token <floatval> FLOATTYPE
 %token <boolval> BOOLTYPE
 %token <stringval> STRINGTYPE
+%token <idval> FUNCTYPE
 %token <longval> READINT
 %token <floatval> READFLOAT
 
@@ -91,6 +93,8 @@ int yylex();
 
 /* Nonterminal types */
 %type <longval> expr
+%type <longval> assign
+%type <longval> any_type
 
 %%
 
@@ -120,7 +124,21 @@ arg_list:
 | '(' VOID ')'
 ;
 
+multi_type:
+%empty
+| multi_type any_type ',';
+
+any_type:
+INTTYPE { $$ = $1;} | FLOATTYPE { $$ = $1;} | BOOLTYPE { $$ = $1;} | STRINGTYPE { $$ = $1;};
+
+param_list:
+'(' multi_type ')'
+| '(' VOID ')'
+| '(' ')';
+
 func_call: '.' ID arg_list;
+
+func_decl: FUNCDEF ID param_list stmt;
 
 stmt:
 block
@@ -129,6 +147,7 @@ block
 | { cur_stmt = block_add_statement(cur_scope); } print_stmt ';'
 | { cur_stmt = block_add_statement(cur_scope); } declare ';'
 | { cur_stmt = block_add_statement(cur_scope); } assign ';'
+| { cur_stmt = block_add_statement(cur_scope); } func_decl
 | { cur_stmt = block_add_statement(cur_scope); } expr ';'
 | func_call {printf(";;aaaaa\n"); cur_stmt = block_add_statement(cur_scope); } ';'
 | NOP { cur_stmt = block_add_statement(cur_scope); } ';'
