@@ -308,7 +308,9 @@ INTTYPE ID {
   st.type = PRIMITIVE;
   st.value.primitive = INTTYPE;
 
-  sl.type = LOCAL;
+  printf(";; declaring %s\n", $2);
+
+  sl.type = block_is_global(cur_scope) ? LABEL : LOCAL;
 
   block_add_symbol(cur_scope, $2, st, sl);
 }
@@ -325,6 +327,7 @@ INTTYPE ID {
   st.value.primitive = FLOATTYPE;
 
   sl.type = LABEL;
+
   block_add_symbol(cur_scope, $2, st, sl);
 }
 | BOOLTYPE ID {
@@ -339,7 +342,7 @@ INTTYPE ID {
   st.type = PRIMITIVE;
   st.value.primitive = BOOLTYPE;
 
-  sl.type = LOCAL;
+  sl.type = block_is_global(cur_scope) ? LABEL : LOCAL;
 
   block_add_symbol(cur_scope, $2, st, sl);
 }

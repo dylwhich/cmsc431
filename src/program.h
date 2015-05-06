@@ -107,6 +107,8 @@ struct Block {
   struct GlobalData *global_data;
   struct SubBlock *prev, *next;
   long registers[32];
+  long next_local;
+  struct Function *containing_function;
 };
 
 union SubBlockValue {

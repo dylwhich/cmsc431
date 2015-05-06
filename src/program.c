@@ -48,6 +48,10 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
   for (i = RAX; i <= XMM7; i++) {
     this->registers[i] = 0;
   }
+
+  this->next_local = 0;
+
+  this->containing_function = NULL;
 };
 
 void block_write(struct Block *this, FILE *out) {
@@ -96,7 +100,8 @@ void block_write_head(struct Block *this, FILE *out) {
   }
 
   for (symbol=this->symbol_table; symbol != NULL; symbol = symbol->hh.next) {
-    if (symbol->location.type != INITIALIZED) {
+    if (symbol->location.type != INITIALIZED &&
+	symbol->location.type != LOCAL) {
       symbol_write_declaration(symbol, out);
     }
   }
@@ -110,6 +115,8 @@ void block_write_head(struct Block *this, FILE *out) {
 
 void block_write_body(struct Block *this, FILE *out) {
   struct SubBlock *child;
+  struct Symbol *symbol;
+
   fprintf(out, "; block_body: %s\n", this->name);
 
   if (this->parent != NULL) {
@@ -154,12 +161,22 @@ void block_write_body(struct Block *this, FILE *out) {
 	    "mov rbp, rsp\n");
   } else fprintf(out, "%s:\n", this->name);
 
+  for (symbol = this->symbol_table; symbol != NULL; symbol = symbol->hh.next) {
+    if (symbol->location.type == LOCAL) {
+      symbol_write_declaration(symbol, out);
+    }
+  }
+
   for (child = this->children; child < (this->children + this->num_children); child++) {
     if (child->type == BLOCK) {
       block_write_body(&(child->value.block), out);
     } else if (child->type == STATEMENT) {
       statement_write(&child->value.statement, out);
     }
+  }
+
+  if (this->next_local != 0) {
+    fprintf(out, "sub rsp, %ld", this->next_local);
   }
 
   fprintf(out, ";end block_body %s\n", this->name);
@@ -236,8 +253,18 @@ struct Symbol *block_add_symbol(struct Block *this, const char *name, struct Sym
   struct Symbol *symbol = (struct Symbol*)malloc(sizeof(struct Symbol));
 
   // TODO: don't use a constant size for the symbol table...
-  symbol_init(symbol, type, this->global_data->next_bss_offset, 8, this, name);
-  this->global_data->next_bss_offset += 8;
+
+  if (symbol->location.type == LABEL) {
+    symbol_init(symbol, type, this->global_data->next_bss_offset, 8, this, name);
+    symbol->location = location;
+    this->global_data->next_bss_offset += 8;
+  } else if (symbol->location.type == LOCAL) {
+    printf(";; adding symbol %s, current next_local is %d\n", name, this->next_local);
+    symbol_init(symbol, type, this->next_local, 8, this, name);
+    this->next_local += 8;
+    //symbol->location = location;
+    symbol->location.type = location.type;
+  }
 
   HASH_ADD_STR(this->symbol_table, label, symbol);
   return symbol;
@@ -251,6 +278,8 @@ struct Symbol *block_add_symbol_initialized(struct Block *this, const char *name
 
   // TODO: don't hardcode
   // TODO: Support non-global initialization
+
+  printf(";; adding INITIALIZED symbol %s\n", name);
   symbol_init(symbol, st, this->global_data->next_data_offset, 8, this, name);
   this->global_data->next_data_offset += 8;
 
@@ -855,7 +884,7 @@ void symbol_write_reference(struct Symbol *this, FILE *out) {
     break;
 
   case LOCAL:
-    fprintf(out, "qword [rbp+%ld]", this->location.value.address);
+    fprintf(out, "qword [rbp-%ld]", this->offset);
     break;
 
   case REGISTER:
@@ -882,7 +911,7 @@ void symbol_get_reference(struct Symbol *this, char *out) {
     break;
 
   case LOCAL:
-    sprintf(out, "qword [rbp+%ld]", this->location.value.address);
+    sprintf(out, "qword [rbp-%ld]", this->offset);
     break;
 
   case REGISTER:
