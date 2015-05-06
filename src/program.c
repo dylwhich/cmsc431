@@ -477,6 +477,8 @@ void statement_call_arg_hacky(struct Statement *this, long is_float, const char 
   char *mov_op;
   enum Register used_reg;
 
+  statement_append_instruction(this, "; adding argument");
+
   if (is_float) {
     statement_append_instruction(this, "add al, 1");
     used_reg = ARG_REGISTERS_FLOAT[this->float_regs_used[this->call_stack_index]++];

@@ -116,7 +116,11 @@ multi_stmt:
 
 multi_expr:
 %empty
-| multi_expr expr ','
+| multi_expr { /*cur_stmt = block_add_statement(cur_scope);*/ } expr {
+  printf(";; adding argument to stack\n");
+  statement_call_arg_hacky(cur_stmt, $3 == FLOATTYPE, "[rsp]");
+  statement_pop(cur_stmt, RAX);
+}
 ;
 
 arg_list:
@@ -136,7 +140,22 @@ param_list:
 | '(' VOID ')'
 | '(' ')';
 
-func_decl: FUNCDEF ID param_list stmt;
+func_decl: FUNCDEF any_type ID param_list {
+  struct SymbolType st;
+  struct StorageLocation sl;
+
+  if (block_resolve_symbol(cur_scope, $3) != NULL) {
+    fprintf(stderr, "Symbol %s:\n", $3);
+    yyerror("Double declaration invalid");
+  }
+
+  st.type = PRIMITIVE;
+  st.value.primitive = FUNCTYPE;
+
+  sl.type = LABEL;
+
+  block_add_symbol(cur_scope, $3, st, sl);
+} stmt;
 
 stmt:
 block
