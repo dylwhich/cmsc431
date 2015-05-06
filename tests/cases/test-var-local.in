@@ -1,0 +1,14 @@
+int i;
+i = 0;
+
+int j;
+
+while (i < 10) {
+int a;
+int b;
+a = i * i;
+b = i + a;
+printl a;
+printl b;
+i = i + 1;
+}
