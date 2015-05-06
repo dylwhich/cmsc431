@@ -112,7 +112,7 @@ multi_stmt:
 
 multi_expr:
 %empty
-| { printf("it's happeninng!!\n");}multi_expr expr ','
+| multi_expr expr ','
 ;
 
 arg_list:
@@ -130,8 +130,8 @@ block
 | { cur_stmt = block_add_statement(cur_scope); } declare ';'
 | { cur_stmt = block_add_statement(cur_scope); } assign ';'
 | { cur_stmt = block_add_statement(cur_scope); } expr ';'
-| NOP { cur_stmt = block_add_statement(cur_scope); } ';'
 | func_call {printf(";;aaaaa\n"); cur_stmt = block_add_statement(cur_scope); } ';'
+| NOP { cur_stmt = block_add_statement(cur_scope); } ';'
 ;
 
 block:
@@ -374,7 +374,7 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
 | expr '*' expr   { type_check($1, $3); $$ = $3; oper_mul($$); }
 | expr '/' expr   { type_check($1, $3); $$ = $3; oper_div($$); }
 | expr '%' expr   { type_check($1, $3); $$ = $3; oper_mod($$); }
-| UMINUS expr        { $$ = $2; oper_neg($$); }
+| '-' expr        { $$ = $2; oper_neg($$); }
 | '!' expr        { $$ = BOOLTYPE; oper_bool_not($2); }
 | expr POW expr   { type_check($1, $3); $$ = $3; oper_pow($$); }
 | '(' expr ')'    { $$ = $2; }
