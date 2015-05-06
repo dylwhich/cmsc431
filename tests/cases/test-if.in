@@ -1,19 +1,19 @@
 if (true)
   printl 1;
-else;
+else pass;
 
 printl 5;
 
 if (false)
   printl 6;
-else;
+else pass;
 
 printl 7;
 
 if (true) {
   printl 8;
   printl 9;
-} else;
+} else pass;
 
 printl 10;
 printl 11;

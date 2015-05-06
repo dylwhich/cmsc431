@@ -66,6 +66,7 @@ int yylex();
 %token <idval> ID
 %token PRINT
 %token PRINTL
+%token NOP
 %left IF
 %nonassoc ELSE
 %token WHILE
@@ -121,7 +122,7 @@ block
 | { cur_stmt = block_add_statement(cur_scope); } declare ';'
 | { cur_stmt = block_add_statement(cur_scope); } assign ';'
 | { cur_stmt = block_add_statement(cur_scope); } expr ';'
-| { cur_stmt = block_add_statement(cur_scope); } ';'
+| NOP { cur_stmt = block_add_statement(cur_scope); } ';'
 ;
 
 block:
