@@ -120,7 +120,7 @@ arg_list:
 | '(' VOID ')'
 ;
 
-//func_call: ID '(' arg_list ')';
+func_call: '.' ID arg_list;
 
 stmt:
 block
@@ -131,7 +131,7 @@ block
 | { cur_stmt = block_add_statement(cur_scope); } assign ';'
 | { cur_stmt = block_add_statement(cur_scope); } expr ';'
 | NOP { cur_stmt = block_add_statement(cur_scope); } ';'
-| arg_list {printf(";;aaaaa\n"); cur_stmt = block_add_statement(cur_scope); } ';'
+| func_call {printf(";;aaaaa\n"); cur_stmt = block_add_statement(cur_scope); } ';'
 ;
 
 block:
