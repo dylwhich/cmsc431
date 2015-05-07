@@ -866,7 +866,7 @@ void symbol_write_declaration(struct Symbol *this, FILE *out) {
 
   case LOCAL:
     fprintf(out, ";;; declaring local\n");
-    fprintf(out, "add rsp, %ld\n", this->size);
+    fprintf(out, "sub rsp, %ld\n", this->size);
     break;
 
   case REGISTER:
