@@ -39,6 +39,7 @@ struct StorageLocation {
 
 struct Function {
   enum yytokentype return_type;
+  enum yytokentype arg_types[64];
 };
 
 enum SymbolTypeType {

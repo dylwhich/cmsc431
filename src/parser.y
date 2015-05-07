@@ -150,8 +150,7 @@ func_decl: FUNCDEF any_type ID param_list {
     yyerror("Double declaration invalid");
   }
 
-  st.type = PRIMITIVE;
-  st.value.primitive = FUNCTYPE;
+  st.type = FUNCTION;
 
   sl.type = LABEL;
 
@@ -185,17 +184,19 @@ block
   if (target == NULL) {
     yyerror("Unknown identifier");
   } else {
-    if (target->type.type == PRIMITIVE) {
-      if (target->type.value.primitive != FUNCTYPE) {
-	yyerror("Incompatible types");
-      } else {
-	symbol_get_reference(target, ref);
-	statement_call_setup(cur_stmt);
-      }
+    if (target->type.type != FUNCTION) {
+      yyerror("Incompatible types");
+    } else {
+      symbol_get_reference(target, ref);
+      statement_call_setup(cur_stmt);
+      // TODO move this into an expression
+      //$$ = target->value.fuction->return_type;
     }
   }
 }
-arg_list {printf(";;aaaaa\n"); } ';'
+arg_list {
+  statement_call_finish(cur_stmt, $2);
+} ';'
 | NOP { cur_stmt = block_add_statement(cur_scope); } ';'
 ;
 

@@ -370,6 +370,11 @@ void block_destroy(struct Block *this) {
 
   HASH_ITER(hh, this->symbol_table, symbol, tmp_symbol) {
     HASH_DEL(this->symbol_table, symbol);
+
+    if (symbol->type.type == FUNCTION) {
+      // TODO Move this to a symbol_destroy
+      free(symbol->type.value.function);
+    }
     free(symbol);
   }
 
@@ -749,6 +754,10 @@ void symbol_init(struct Symbol *this, struct SymbolType type, long offset,
   this->size = size;
 
   this->scope = scope;
+
+  if (this->type.type == FUNCTION) {
+    this->type.value.function = malloc(sizeof(struct Function));
+  }
 
   strncpy(this->label, label, SYMBOL_MAX_LENGTH);
   this->label[SYMBOL_MAX_LENGTH-1] = '\0';
