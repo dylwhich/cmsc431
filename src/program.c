@@ -259,7 +259,7 @@ struct Symbol *block_add_symbol(struct Block *this, const char *name, struct Sym
     symbol->location = location;
     this->global_data->next_bss_offset += 8;
   } else if (symbol->location.type == LOCAL) {
-    printf(";; adding symbol %s, current next_local is %d\n", name, this->next_local);
+    printf(";; adding symbol %s, current next_local is %ld\n", name, this->next_local);
     symbol_init(symbol, type, this->next_local, 8, this, name);
     this->next_local += 8;
     //symbol->location = location;
