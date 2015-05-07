@@ -27,6 +27,8 @@ int yylex();
  void if_stmt(struct Block*, struct Statement*,
 	      struct SubBlock*, struct SubBlock*);
  void while_loop(struct Block*, struct Statement*, struct SubBlock*);
+ void func_def(struct Block*, const char*, struct Statement *dummy_stmt,
+	       struct SubBlock*);
 
  void oper_bool_or(enum yytokentype, enum yytokentype);
  void oper_bool_and(enum yytokentype, enum yytokentype);
@@ -143,7 +145,6 @@ param_list:
 func_decl: FUNCDEF any_type ID param_list {
   struct SymbolType st;
   struct StorageLocation sl;
-
   if (block_resolve_symbol(cur_scope, $3) != NULL) {
     fprintf(stderr, "Symbol %s:\n", $3);
     yyerror("Double declaration invalid");
@@ -156,9 +157,15 @@ func_decl: FUNCDEF any_type ID param_list {
 
   block_add_symbol(cur_scope, $3, st, sl);
 
+  cur_scope = block_add_child(cur_scope);
   cur_stmt = block_add_statement(cur_scope); // append an extra statement so we can add labels and stuff
   statement_append_instruction(cur_stmt, ";; this is a dummy statement");
-} stmt;
+} stmt {
+  struct SubBlock *last_child = block_get_last_child(cur_scope);
+  func_def(cur_scope, $3, &(subblock_get_prev(last_child)->value.statement), last_child);
+
+  cur_scope = cur_scope->parent;
+};
 
 stmt:
 block
@@ -588,7 +595,7 @@ void while_loop(struct Block *block, struct Statement *test,
   statement_append_instruction(last_stmt, done_label);
 }
 
-void func_def(struct Block *block, const char *name, struct SubBlock *body) {
+void func_def(struct Block *block, const char *name, struct Statement *dummy_stmt, struct SubBlock *body) {
   struct Statement *last_stmt, *first_stmt;
   char start_label[64], end_label[64],
     skip_jmp[64];
@@ -604,11 +611,12 @@ void func_def(struct Block *block, const char *name, struct SubBlock *body) {
   last_stmt = recursive_find_last_statement(body);
 
   // this is a dummy statement so it's ok to append
-  statement_append_instruction(first_stmt, start_label);
+  statement_append_instruction(dummy_stmt, skip_jmp);
+  statement_append_instruction(dummy_stmt, start_label);
   //statement_push(first_stmt, RBP);
   // I don't think we need to track push/pop within functions... yet...
-  statement_append_instruction(first_stmt, "push rbp");
-  statement_append_instruction(first_stmt, "mov rbp, rsp");
+  statement_append_instruction(dummy_stmt, "push rbp");
+  statement_append_instruction(dummy_stmt, "mov rbp, rsp");
   statement_append_instruction(last_stmt, "mov rsp, rbp");
   statement_append_instruction(last_stmt, "pop rbp");
   statement_append_instruction(last_stmt, "ret");
