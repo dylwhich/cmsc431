@@ -477,6 +477,24 @@ void statement_pop(struct Statement *this, enum Register regname) {
   this->parent->global_data->stack_size -= 8;
 }
 
+void statement_grow_stack(struct Statement *this, size_t bytes) {
+  char inst[64];
+
+  sprintf(inst, "sub rsp, %zu", bytes);
+
+  statement_append_instruction(this, inst);
+  this->parent->global_data->stack_size += bytes;
+}
+
+void statement_shrink_stack(struct Statement *this, size_t bytes) {
+  char inst[64];
+
+  sprintf(inst, "add rsp, %zu", bytes);
+
+  statement_append_instruction(this, inst);
+  this->parent->global_data->stack_size -= bytes;
+}
+
 void statement_call_setup(struct Statement *this) {
   enum Register i;
   // stores the current frame's values

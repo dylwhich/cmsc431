@@ -155,6 +155,9 @@ func_decl: FUNCDEF any_type ID param_list {
   sl.type = LABEL;
 
   block_add_symbol(cur_scope, $3, st, sl);
+
+  cur_stmt = block_add_statement(cur_scope); // append an extra statement so we can add labels and stuff
+  statement_append_instruction(cur_stmt, ";; this is a dummy statement");
 } stmt;
 
 stmt:
@@ -583,6 +586,33 @@ void while_loop(struct Block *block, struct Statement *test,
 
   statement_append_instruction(last_stmt, test_jmp);
   statement_append_instruction(last_stmt, done_label);
+}
+
+void func_def(struct Block *block, const char *name, struct SubBlock *body) {
+  struct Statement *last_stmt, *first_stmt;
+  char start_label[64], end_label[64],
+    skip_jmp[64];
+
+  block_get_unique_name(block, end_label);
+
+  sprintf(start_label, "%s:", name);
+  sprintf(skip_jmp, "jmp %s", end_label);
+
+  strcat(end_label, ":");
+
+  first_stmt = recursive_find_first_statement(body);
+  last_stmt = recursive_find_last_statement(body);
+
+  // this is a dummy statement so it's ok to append
+  statement_append_instruction(first_stmt, start_label);
+  //statement_push(first_stmt, RBP);
+  // I don't think we need to track push/pop within functions... yet...
+  statement_append_instruction(first_stmt, "push rbp");
+  statement_append_instruction(first_stmt, "mov rbp, rsp");
+  statement_append_instruction(last_stmt, "mov rsp, rbp");
+  statement_append_instruction(last_stmt, "pop rbp");
+  statement_append_instruction(last_stmt, "ret");
+  statement_append_instruction(last_stmt, end_label);
 }
 
 void oper_bool_or(enum yytokentype a, enum yytokentype b) {
