@@ -128,6 +128,21 @@ while (expr) { stmt; ...; }
 .TP
 while (expr) stmt;
 Executes stmt until expr evaluates to zero.
+
+.SS Functions
+The language supports user-defined functions, which may be written as
+follows:
+.TP
+def type name(type name, type name, ... ,) { stmt; ...; }
+.TP
+def type name(type name, type name, ... ,) stmt;
+
+Note that a trailing comma is required in parameter lists. Function calls
+are written as follows:
+.TP
+\.name(expr, expr, ... ,);
+Note that a trailing comma is required in the argument list.
+
 .
 .SH LIMITATIONS
 .IP \(bu
@@ -139,9 +154,9 @@ Printing multiple string literals may result in undefined behavior.
 .IP \(bu
 If statements must be followed by else statements.
 .IP \(bu
-Function calls and definitions do not work because of grammar issues.
-They are theoretically supported internally, but there is no
-implementation.
+Functions may be defined and called, but variables may be
+inadvertently destroyed after printing values within a function. There
+is no support for return values at this time.
 .
 .SH AUTHOR
 Dylan Whichard <dylwhich@umbc.edu>
