@@ -121,8 +121,8 @@ multi_expr:
 | multi_expr { /*cur_stmt = block_add_statement(cur_scope);*/ } expr {
   printf(";; adding argument to stack\n");
   statement_call_arg_hacky(cur_stmt, $3 == FLOATTYPE, "[rsp]");
-  statement_pop(cur_stmt, RAX);
-}
+  //statement_pop(cur_stmt, RAX);
+} ','
 ;
 
 arg_list:
@@ -130,21 +130,27 @@ arg_list:
 | '(' VOID ')'
 ;
 
-multi_type:
-%empty
-| multi_type any_type ',';
-
 any_type:
-INTTYPE { $$ = $1;} | FLOATTYPE { $$ = $1;} | BOOLTYPE { $$ = $1;} | STRINGTYPE { $$ = $1;};
+INTTYPE { $$ = INTTYPE; } | FLOATTYPE { $$ = FLOATTYPE; } | BOOLTYPE { $$ = BOOLTYPE; } | STRINGTYPE { $$ = STRINGTYPE; };
+
+param: any_type ID {
+  fprintf(stderr, "Adding parameter of type %d\n", $1);
+  statement_add_parameter(cur_stmt, $2, $1);
+};
+
+multi_param:
+%empty
+| multi_param param ',';
 
 param_list:
-'(' multi_type ')'
+'(' multi_param ')'
 | '(' VOID ')'
 | '(' ')';
 
-func_decl: FUNCDEF any_type ID param_list {
+func_decl: FUNCDEF any_type ID {
   struct SymbolType st;
   struct StorageLocation sl;
+  struct Function *func;
   if (block_resolve_symbol(cur_scope, $3) != NULL) {
     fprintf(stderr, "Symbol %s:\n", $3);
     yyerror("Double declaration invalid");
@@ -154,9 +160,11 @@ func_decl: FUNCDEF any_type ID param_list {
 
   sl.type = LABEL;
 
-  block_add_symbol(cur_scope, $3, st, sl);
+  func = block_add_symbol(cur_scope, $3, st, sl)->type.value.function;
 
   cur_scope = block_add_child(cur_scope);
+  cur_scope->containing_function = func;
+} param_list {
   cur_stmt = block_add_statement(cur_scope); // append an extra statement so we can add labels and stuff
   statement_append_instruction(cur_stmt, ";; this is a dummy statement");
 } stmt {
@@ -185,7 +193,7 @@ block
     yyerror("Unknown identifier");
   } else {
     if (target->type.type != FUNCTION) {
-      yyerror("Incompatible types");
+      yyerror("Incompatible types in function call");
     } else {
       symbol_get_reference(target, ref);
       statement_call_setup(cur_stmt);
@@ -247,6 +255,8 @@ if_else_stmt:
 
 print_stmt:
 PRINTL expr {
+  //statement_push(cur_stmt, RSI);
+  //statement_push(cur_stmt, RDI);
   switch ($2) {
   case INTTYPE:
     statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp]");
@@ -277,6 +287,8 @@ PRINTL expr {
   statement_stack_align(cur_stmt);
   statement_append_instruction(cur_stmt, "call printf");
   statement_stack_reset(cur_stmt);
+  //  statement_pop(cur_stmt, RDI);
+  // statement_pop(cur_stmt, RSI);
 }
 | PRINT expr {
   statement_call_setup(cur_stmt);
@@ -370,7 +382,7 @@ ID '=' expr {
   } else {
     if (target->type.type == PRIMITIVE) {
       if (target->type.value.primitive != $3) {
-	yyerror("Incompatible types");
+	yyerror("Incompatible types in assignment");
       } else {
 	symbol_get_reference(target, ref);
 	printf("; reference to %s is %s\n", target->label, ref);
@@ -902,7 +914,8 @@ void oper_pow(enum yytokentype type) {
 
 void type_check(enum yytokentype a, enum yytokentype b) {
   if (a != b) {
-    yyerror("Incompatible Types");
+    fprintf(stderr, "%d and %d: ", a, b);
+    yyerror("Incompatible Types in expression");
   }
 }
 

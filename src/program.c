@@ -266,6 +266,8 @@ struct Symbol *block_add_symbol(struct Block *this, const char *name, struct Sym
     symbol->location.type = location.type;
   }
 
+  symbol->type = type;
+
   HASH_ADD_STR(this->symbol_table, label, symbol);
   return symbol;
 }
@@ -475,7 +477,7 @@ void statement_push(struct Statement *this, enum Register regname) {
 
 void statement_pop(struct Statement *this, enum Register regname) {
   char reg[8], inst[64];
-  this->parent->registers[regname] = 1;
+  //this->parent->registers[regname] = 1;
   register_get_name(regname, reg);
   sprintf(inst, "pop QWORD %s", reg);
   statement_append_instruction(this, inst);
@@ -500,14 +502,45 @@ void statement_shrink_stack(struct Statement *this, size_t bytes) {
   this->parent->global_data->stack_size -= bytes;
 }
 
+void statement_add_parameter(struct Statement *this, const char *name, enum yytokentype type) {
+  struct Block *block = this->parent;
+  struct Symbol *symbol;
+  enum Register reg;
+
+  struct SymbolType s_type;
+  struct StorageLocation s_location;
+
+  s_type.type = PRIMITIVE;
+  s_type.value.primitive = type;
+
+  if (type == FLOATTYPE) {
+    reg = ARG_REGISTERS_FLOAT[this->float_regs_used[this->call_stack_index]++];
+  } else {
+    reg = ARG_REGISTERS_INT[this->int_regs_used[this->call_stack_index]++];
+  }
+
+  if (reg == (enum Register) -1) {
+    // We're out of registers! Whaa
+    // won't worry about this now
+    s_location.type = PARAM;
+    //s_location.value.address =
+  } else {
+    block->registers[reg] = 1;
+    s_location.type = REGISTER;
+    s_location.value.regname = reg;
+  }
+
+  block_add_symbol(block, name, s_type, s_location);
+}
+
 void statement_call_setup(struct Statement *this) {
   enum Register i;
   // stores the current frame's values
-  for (i = RBX; i <= R15; i++) {
+  /*for (i = RBX; i <= R15; i++) {
     if (this->parent->registers[i]) {
       statement_push(this, i);
     }
-  }
+    }*/
 
   statement_append_instruction(this, "xor rax, rax");
   this->call_stack_index++;
@@ -545,6 +578,8 @@ void statement_call_arg_hacky(struct Statement *this, long is_float, const char 
   }
 
   // Does not account for moving a register to itself...
+  statement_append_instruction(this, "; pushing arg");
+  //statement_push(this, used_reg);
   register_get_name(used_reg, regname);
   sprintf(inst, "%s %s, %s", mov_op, regname, src);
   statement_append_instruction(this, inst);
@@ -553,6 +588,7 @@ void statement_call_arg_hacky(struct Statement *this, long is_float, const char 
 void statement_call_finish(struct Statement *this, const char *func) {
   char out[128];
   enum Register i;
+  long j;
 
   statement_stack_align(this);
 
@@ -562,16 +598,30 @@ void statement_call_finish(struct Statement *this, const char *func) {
 
   statement_stack_reset(this);
 
+  fprintf(stderr, "call_stack_index is %d\n", this->call_stack_index);
+  fprintf(stderr, "Starting j at %d\n", this->int_regs_used[this->call_stack_index] - 1);
+  fprintf(stderr, "starting float j at %d\n", this->float_regs_used[this->call_stack_index] - 1);
+
+  for (j = this->int_regs_used[this->call_stack_index]-1; j >= 0; j--) {
+    statement_append_instruction(this, "; popping arg");
+    //statement_pop(this, ARG_REGISTERS_INT[j]);
+  }
+
+  for (j = this->float_regs_used[this->call_stack_index]-1; j >= 0; j--) {
+    statement_append_instruction(this, "; popping arg");
+    //statement_pop(this, ARG_REGISTERS_FLOAT[j]);
+  }
+
   // stores the current frame's values
-  for (i = R15; i > RAX; i--) {
+  /*for (i = R15; i > RAX; i--) {
     if (this->parent->registers[i]) {
       statement_pop(this, i);
     }
-  }
-
-  statement_push(this, RAX);
+    }*/
 
   this->call_stack_index--;
+
+  statement_push(this, RAX);
 }
 
 void statement_push_int(struct Statement *this, long val) {
@@ -882,6 +932,9 @@ void symbol_write_declaration(struct Symbol *this, FILE *out) {
     // I'm pretty sure we don't have to do anything here
     break;
 
+  case PARAM:
+    break;
+
   case INITIALIZED:
     if (this->type.type == PRIMITIVE && this->type.value.primitive == STRINGTYPE) {
       fprintf(out, "    dq ");
@@ -918,6 +971,10 @@ void symbol_write_reference(struct Symbol *this, FILE *out) {
     register_write_name(this->location.value.regname, out);
     break;
 
+  case PARAM:
+    fprintf(out, "qword [rbp+%ld]", this->offset);
+    break;
+
   case INITIALIZED:
     fprintf(out, "qword [%s+%ld]", this->scope->global_data->data_label, this->offset);
     break;
@@ -943,6 +1000,10 @@ void symbol_get_reference(struct Symbol *this, char *out) {
 
   case REGISTER:
     register_get_name(this->location.value.regname, out);
+    break;
+
+  case PARAM:
+    sprintf(out, "qword [rbp+%ld]", this->offset);
     break;
 
   case INITIALIZED:

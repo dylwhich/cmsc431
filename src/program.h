@@ -16,7 +16,8 @@ enum StorageLocationType {
   ADDRESS,
   INITIALIZED,
   REGISTER,
-  LOCAL
+  LOCAL,
+  PARAM,
 };
 
 enum Register {
@@ -173,6 +174,8 @@ void statement_push_int(struct Statement *this, long val);
 void statement_pop(struct Statement *this, enum Register regname);
 void statement_grow_stack(struct Statement *this, size_t bytes);
 void statement_shrink_stack(struct Statement *this, size_t bytes);
+void statement_add_parameter(struct Statement *this, const char *name,
+			     enum yytokentype type);
 void statement_call_setup(struct Statement *this);
 void statement_call_arg(struct Statement *this, struct Symbol *arg);
 void statement_call_arg_hacky(struct Statement *this, long is_float,
