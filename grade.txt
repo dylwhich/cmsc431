@@ -1,15 +1,15 @@
-Project 5
+Project 6
 
 Name: Dylan Whichard (dylwhich) 
 ===============================================================================
 
 Correctness/Completeness (55%)
--10 (10 pts) Procedure definitions are correctly supported
--10 (10 pts) Parameter passing is correctly supported
--5   (5 pts) Return statements are correctly supported
--10 (10 pts) Procedure invocation is correctly supported
--10 (10 pts) Local scoping is correctly supported
--10 (10 pts) Recursion is correctly supported
+-7  (10 pts) Functions support return types
+-7  (10 pts) Return statements can return expression values
+-3   (5 pts) Compiler validates that the number of arguments is correct
+-7  (10 pts) Compiler validates that the types of arguments are correct
+-7  (10 pts) Function calls can be used in expressions
+-7  (10 pts) Function calls can be used as parameters
 
 Testing (30%)
      (5 pts) "Easy" testcase
@@ -31,11 +31,9 @@ Documentation (10%)
 
 Comments:
 
-Looking forward to seeing everything work.
-
-Once you get everything working, resubmit and let me know so I can regrade it
-and put the proper points into Project 5. 
+It looks like some of the foundations of the functionality are there, but I had
+trouble getting some of it into working assembly.
 
 ===============================================================================
 
-Total Score: 45/100
+Total Score: 62/100
