@@ -71,6 +71,7 @@ int yylex();
 %token PRINTL
 %token NOP
 %token VOID
+%token RETURN
 %left IF
 %nonassoc ELSE
 %token WHILE
@@ -178,6 +179,7 @@ stmt:
 block
 | if_else_stmt
 | while_loop
+| return_stmt ';'
 | { cur_stmt = block_add_statement(cur_scope); } print_stmt ';'
 | { cur_stmt = block_add_statement(cur_scope); } declare ';'
 | { cur_stmt = block_add_statement(cur_scope); } func_decl
@@ -212,6 +214,10 @@ block:
 '{' { cur_scope = block_add_child(cur_scope); }
 multi_stmt { cur_scope = cur_scope->parent; } '}'
 ;
+
+return_stmt:
+RETURN
+| RETURN expr;
 
 while_loop:
 {

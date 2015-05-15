@@ -127,6 +127,10 @@
     return FUNCDEF;
 }
 
+"return" {
+    return RETURN;
+}
+
 [a-zA-Z_][a-zA-Z_0-9]* {
     strncpy(yylval.idval, yytext, 63);
     yylval.idval[63] = '\0';
