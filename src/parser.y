@@ -322,8 +322,8 @@ PRINTL expr {
   }
   statement_call_finish(cur_stmt, "printf");
   statement_stack_reset(cur_stmt);
-  statement_pop(cur_stmt, RSI);
   statement_pop(cur_stmt, RDI);
+  statement_pop(cur_stmt, RSI);
 }
 ;
 
