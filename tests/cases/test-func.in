@@ -1,7 +1,11 @@
 def int test() {
 int a;
+int b;
 a = 5;
+b = 7;
 printl a;
+printl b;
+printl a + b;
 }
 
 .test();
