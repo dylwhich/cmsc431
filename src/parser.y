@@ -184,29 +184,6 @@ block
 | { cur_stmt = block_add_statement(cur_scope); } declare ';'
 | { cur_stmt = block_add_statement(cur_scope); } func_decl
 | { cur_stmt = block_add_statement(cur_scope); } expr ';'
-| '.' ID {
-  char ref[64];
-  struct Symbol *target = block_resolve_symbol(cur_scope, $2);
-  cur_stmt = block_add_statement(cur_scope);
-
-  printf(";; Calling function %s\n", $2);
-
-  if (target == NULL) {
-    yyerror("Unknown identifier");
-  } else {
-    if (target->type.type != FUNCTION) {
-      yyerror("Incompatible types in function call");
-    } else {
-      symbol_get_reference(target, ref);
-      statement_call_setup(cur_stmt);
-      // TODO move this into an expression
-      //$$ = target->value.fuction->return_type;
-    }
-  }
-}
-arg_list {
-  statement_call_finish(cur_stmt, $2);
-} ';'
 | NOP { cur_stmt = block_add_statement(cur_scope); } ';'
 ;
 
@@ -450,6 +427,29 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
     }
   }
   $$ = block_resolve_symbol(cur_scope, $1)->type.value.primitive;
+}
+| '.' ID {
+  char ref[64];
+  struct Symbol *target = block_resolve_symbol(cur_scope, $2);
+  cur_stmt = block_add_statement(cur_scope);
+
+  printf(";; Calling function %s\n", $2);
+
+  if (target == NULL) {
+    yyerror("Unknown identifier");
+  } else {
+    if (target->type.type != FUNCTION) {
+      yyerror("Incompatible types in function call");
+    } else {
+      symbol_get_reference(target, ref);
+      statement_call_setup(cur_stmt);
+      // TODO move this into an expression
+      //$$ = target->value.fuction->return_type;
+    }
+  }
+}
+arg_list {
+  statement_call_finish(cur_stmt, $2);
 }
 | expr BOOL_OR expr            { $$ = BOOLTYPE; oper_bool_or($1, $3); }
 | expr BOOL_AND expr           { $$ = BOOLTYPE; oper_bool_and($1, $3); }
