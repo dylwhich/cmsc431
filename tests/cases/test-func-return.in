@@ -1,0 +1,7 @@
+def int test() {
+printl "happens";
+return 1;
+printl "Doesn't happen";
+}
+
+.test();
