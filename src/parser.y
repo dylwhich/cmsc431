@@ -132,7 +132,7 @@ arg_list:
 ;
 
 any_type:
-INTTYPE { $$ = INTTYPE; } | FLOATTYPE { $$ = FLOATTYPE; } | BOOLTYPE { $$ = BOOLTYPE; } | STRINGTYPE { $$ = STRINGTYPE; };
+INTTYPE { $$ = INTTYPE; } | FLOATTYPE { $$ = FLOATTYPE; } | BOOLTYPE { $$ = BOOLTYPE; } | STRINGTYPE { $$ = STRINGTYPE; } | VOID { $$ = VOID; };
 
 param: any_type ID {
   fprintf(stderr, "Adding parameter of type %d\n", $1);
@@ -162,6 +162,7 @@ func_decl: FUNCDEF any_type ID {
   sl.type = LABEL;
 
   func = block_add_symbol(cur_scope, $3, st, sl)->type.value.function;
+  func->return_type = $2;
 
   cur_scope = block_add_child(cur_scope);
   cur_scope->containing_function = func;
@@ -194,11 +195,22 @@ multi_stmt { cur_scope = cur_scope->parent; } '}'
 
 return_stmt:
 RETURN expr {
-  statement_append_instruction(cur_stmt, "pop rax");
-  statement_append_instruction(cur_stmt, "jmp .retlbl");
+  if (cur_scope->containing_function == NULL) {
+    yyerror("Invalid return statement outside function definition.");
+  } else {
+    if (cur_scope->containing_function->return_type == VOID) {
+      yyerror("Invalid return value in void function");
+    }
+    statement_append_instruction(cur_stmt, "pop rax");
+    statement_append_instruction(cur_stmt, "jmp .retlbl");
+  }
 }
 | RETURN {
+  if (cur_scope->containing_function != NULL) {
   statement_append_instruction(cur_stmt, "jmp .retlbl");
+  } else {
+    yyerror("Invalid return statement outside function definition.");
+  }
 };
 
 while_loop:
