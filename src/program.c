@@ -253,6 +253,7 @@ struct Symbol *block_add_symbol(struct Block *this, const char *name, struct Sym
   struct Symbol *symbol = (struct Symbol*)malloc(sizeof(struct Symbol));
 
   // TODO: don't use a constant size for the symbol table...
+  symbol->type = type;
 
   if (symbol->location.type == LABEL) {
     symbol_init(symbol, type, this->global_data->next_bss_offset, 8, this, name);
@@ -265,8 +266,6 @@ struct Symbol *block_add_symbol(struct Block *this, const char *name, struct Sym
     //symbol->location = location;
     symbol->location.type = location.type;
   }
-
-  symbol->type = type;
 
   HASH_ADD_STR(this->symbol_table, label, symbol);
   return symbol;
