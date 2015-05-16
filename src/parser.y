@@ -650,7 +650,7 @@ void func_def(struct Block *block, const char *name, struct Statement *dummy_stm
   sprintf(start_label, "%s:", name);
   sprintf(skip_jmp, "jmp %s", end_label);
 
-  strcat(end_label, ":");
+   strcat(end_label, ":");
 
   first_stmt = recursive_find_first_statement(body);
   last_stmt = recursive_find_last_statement(body);
