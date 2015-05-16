@@ -220,6 +220,7 @@ struct Block *block_add_named_child(struct Block *this, const char *name) {
 
   this->children[this->num_children].type = BLOCK;
   block_init(&(this->children[this->num_children].value.block), tmp, this);
+  this->children[this->num_children].value.block.containing_function = this->containing_function;
 
   if (this->num_children != 0) {
     subblock_set_prev(&(this->children[this->num_children]), &(this->children[this->num_children-1]));
