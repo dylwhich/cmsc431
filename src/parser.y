@@ -96,6 +96,7 @@ int yylex();
 
 /* Nonterminal types */
 %type <longval> expr
+%type <longval> func_call
 %type <longval> assign
 %type <longval> any_type
 
@@ -201,6 +202,11 @@ RETURN expr {
     if (cur_scope->containing_function->return_type == VOID) {
       yyerror("Invalid return value in void function");
     }
+
+    if ($2 != cur_scope->containing_function->return_type) {
+      yyerror("Function's return type does not match type of expression in return statement");
+    }
+
     statement_append_instruction(cur_stmt, "pop rax");
     statement_append_instruction(cur_stmt, "jmp .retlbl");
   }
@@ -397,6 +403,31 @@ ID '=' expr {
 }
 ;
 
+func_call:
+'.' ID {
+  char ref[64];
+  struct Symbol *target = block_resolve_symbol(cur_scope, $2);
+  cur_stmt = block_add_statement(cur_scope);
+
+  printf(";; Calling function %s\n", $2);
+
+  if (target == NULL) {
+    yyerror("Unknown identifier");
+  } else {
+    if (target->type.type != FUNCTION) {
+      yyerror("Incompatible types in function call");
+    } else {
+      symbol_get_reference(target, ref);
+      statement_call_setup(cur_stmt);
+      // TODO move this into an expression
+    }
+  }
+}
+arg_list {
+  statement_call_finish(cur_stmt, $2);
+  $$ = block_resolve_symbol(cur_scope, $2)->type.value.function->return_type;
+};
+
 expr:
 INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
 | FLOAT           { asm_literal_float($1); $$ = FLOATTYPE; }
@@ -440,29 +471,7 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
   }
   $$ = block_resolve_symbol(cur_scope, $1)->type.value.primitive;
 }
-| '.' ID {
-  char ref[64];
-  struct Symbol *target = block_resolve_symbol(cur_scope, $2);
-  cur_stmt = block_add_statement(cur_scope);
-
-  printf(";; Calling function %s\n", $2);
-
-  if (target == NULL) {
-    yyerror("Unknown identifier");
-  } else {
-    if (target->type.type != FUNCTION) {
-      yyerror("Incompatible types in function call");
-    } else {
-      symbol_get_reference(target, ref);
-      statement_call_setup(cur_stmt);
-      // TODO move this into an expression
-      //$$ = target->value.fuction->return_type;
-    }
-  }
-}
-arg_list {
-  statement_call_finish(cur_stmt, $2);
-}
+| func_call
 | expr BOOL_OR expr            { $$ = BOOLTYPE; oper_bool_or($1, $3); }
 | expr BOOL_AND expr           { $$ = BOOLTYPE; oper_bool_and($1, $3); }
 | expr BOOL_XOR expr           { $$ = BOOLTYPE; oper_bool_xor($1, $3); }
