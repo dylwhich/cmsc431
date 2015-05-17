@@ -158,6 +158,7 @@ void block_destroy(struct Block *this);
 
 // PRIVATE!
 void __block_grow_children(struct Block *this);
+void __block_fix_parents(struct Block *this);
 
 struct SubBlock *subblock_get_prev(struct SubBlock *this);
 
