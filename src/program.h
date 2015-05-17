@@ -76,7 +76,6 @@ struct Statement {
   char *buffer;
   long realignment;
   struct Block *parent;
-  struct SubBlock *prev, *next;
   char label[64];
   long int_regs_used[32];
   long float_regs_used[32];
@@ -107,7 +106,6 @@ struct Block {
   long len_children;
   struct Symbol *symbol_table;
   struct GlobalData *global_data;
-  struct SubBlock *prev, *next;
   long registers[32];
   long next_local;
   struct Function *containing_function;
@@ -161,10 +159,7 @@ void block_destroy(struct Block *this);
 // PRIVATE!
 void __block_grow_children(struct Block *this);
 
-void subblock_set_prev(struct SubBlock *this, struct SubBlock *prev);
 struct SubBlock *subblock_get_prev(struct SubBlock *this);
-
-void subblock_set_next(struct SubBlock *this, struct SubBlock *next);
 
 void statement_init(struct Statement *this, struct Block *parent);
 void statement_append_instruction(struct Statement *this,

@@ -24,9 +24,6 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
   this->num_children = 0;
   this->children = malloc(this->len_children * sizeof(struct SubBlock));
 
-  this->prev = NULL;
-  this->next = NULL;
-
   // Keep the global data in sync with all the blocks
   if (block_is_global(this)) {
     this->global_data = malloc(sizeof(struct GlobalData));
@@ -223,8 +220,6 @@ struct Block *block_add_named_child(struct Block *this, const char *name) {
   this->children[this->num_children].value.block.containing_function = this->containing_function;
 
   if (this->num_children != 0) {
-    subblock_set_prev(&(this->children[this->num_children]), &(this->children[this->num_children-1]));
-    subblock_set_next(&(this->children[this->num_children-1]), &(this->children[this->num_children]));
   }
 
   return &(this->children[this->num_children++].value.block);
@@ -237,11 +232,6 @@ struct Statement *block_add_statement(struct Block *this) {
 
   this->children[this->num_children].type = STATEMENT;
   statement_init(&(this->children[this->num_children].value.statement), this);
-
-  if (this->num_children != 0) {
-    subblock_set_prev(&(this->children[this->num_children]), &(this->children[this->num_children-1]));
-    subblock_set_next(&(this->children[this->num_children-1]), &(this->children[this->num_children]));
-  }
 
   return &(this->children[this->num_children++].value.statement);
 }
@@ -397,37 +387,44 @@ void block_destroy(struct Block *this) {
 
 void __block_grow_children(struct Block *this) {
   struct SubBlock *tmp;
+  printf(";;;reallocating children for %s\n", this->name);
   tmp = (struct SubBlock*)realloc(this->children, this->len_children * 2 * sizeof(struct SubBlock));
   if (tmp != NULL) {
+    if (tmp != this->children) {
+      printf(";;;children changing from %x to %x\n", this->children, tmp);
+    }
     this->children = tmp;
     this->len_children *= 2;
+    __block_fix_parents(this);
   } else {
     exit(1);
   }
 }
 
-void subblock_set_prev(struct SubBlock *this, struct SubBlock *prev) {
-  if (this->type == BLOCK) {
-    this->value.block.prev = prev;
-  } else if (this->type == STATEMENT) {
-    this->value.statement.prev = prev;
+void __block_fix_parents(struct Block *this) {
+  struct SubBlock *tmp;
+  for (tmp = this->children; tmp < (this->children + this->num_children); tmp++) {
+    if (tmp->type == BLOCK) {
+      tmp->value.block.parent = this;
+      __block_fix_parents(&(tmp->value.block));
+    } else if (tmp->type == STATEMENT) {
+      tmp->value.statement.parent = this;
+    }
   }
 }
 
 struct SubBlock *subblock_get_prev(struct SubBlock *this) {
-  if (this->type == BLOCK) {
-    return this->value.block.prev;
-  } else {
-    return this->value.statement.prev;
-  }
-}
+  struct Block *parent;
+  struct SubBlock *start;
 
-void subblock_set_next(struct SubBlock *this, struct SubBlock *next) {
-  if (this->type == BLOCK) {
-    this->value.block.next = next;
-  } else if (this->type == STATEMENT) {
-    this->value.statement.next = next;
+  parent = this->type == BLOCK ? this->value.block.parent : this->value.statement.parent;
+  start = parent->children;
+
+  if (this == start) {
+    return NULL;
   }
+
+  return this-1;
 }
 
 void statement_init(struct Statement *this, struct Block *parent) {
@@ -438,8 +435,6 @@ void statement_init(struct Statement *this, struct Block *parent) {
   this->buffer = (char*) calloc(this->buffer_size, sizeof(char));
   this->realignment = 0;
   this->parent = parent;
-  this->next = NULL;
-  this->prev = NULL;
   this->label[0] = '\0';
   this->call_stack_index = -1;
 
