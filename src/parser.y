@@ -121,9 +121,7 @@ multi_stmt:
 multi_expr:
 %empty
 | multi_expr { /*cur_stmt = block_add_statement(cur_scope);*/ } expr {
-  printf(";; adding argument to stack\n");
-  statement_call_arg_hacky(cur_stmt, $3 == FLOATTYPE, "[rsp]");
-  //statement_pop(cur_stmt, RAX);
+  statement_call_arg_pop(cur_stmt, $3 == FLOATTYPE);
 } ','
 ;
 

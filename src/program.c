@@ -543,6 +543,27 @@ void statement_call_arg(struct Statement *this, struct Symbol *arg) {
   }
 }
 
+void statement_call_arg_pop(struct Statement *this, long is_float) {
+  enum Register used_reg;
+
+  statement_append_instruction(this, "; adding argument from stack pop");
+
+  if (is_float) {
+    statement_append_instruction(this, "add al, 1");
+    used_reg = ARG_REGISTERS_FLOAT[this->float_regs_used[this->call_stack_index]++];
+  } else {
+    used_reg = ARG_REGISTERS_INT[this->int_regs_used[this->call_stack_index]++];
+  }
+
+  if (used_reg == -1) {
+    statement_append_instruction(this, ";;;;=== Too many registers used??? register_acquire == -1");
+  }
+
+  // Does not account for moving a register to itself...
+  statement_append_instruction(this, "; pushing arg");
+  statement_pop(this, used_reg);
+}
+
 void statement_call_arg_hacky(struct Statement *this, long is_float, const char *src) {
   char regname[32], inst[64];
   char *mov_op;

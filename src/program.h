@@ -174,6 +174,7 @@ void statement_add_parameter(struct Statement *this, const char *name,
 			     enum yytokentype type);
 void statement_call_setup(struct Statement *this);
 void statement_call_arg(struct Statement *this, struct Symbol *arg);
+void statement_call_arg_pop(struct Statement *this, long is_float);
 void statement_call_arg_hacky(struct Statement *this, long is_float,
 			      const char *argloc);
 void statement_call_finish(struct Statement *this, const char *func);
