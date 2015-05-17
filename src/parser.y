@@ -136,7 +136,6 @@ any_type:
 INTTYPE { $$ = INTTYPE; } | FLOATTYPE { $$ = FLOATTYPE; } | BOOLTYPE { $$ = BOOLTYPE; } | STRINGTYPE { $$ = STRINGTYPE; } | VOID { $$ = VOID; };
 
 param: any_type ID {
-  fprintf(stderr, "Adding parameter of type %d\n", $1);
   statement_add_parameter(cur_stmt, $2, $1);
 };
 

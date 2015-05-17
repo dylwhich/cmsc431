@@ -583,10 +583,6 @@ void statement_call_finish(struct Statement *this, const char *func) {
 
   statement_stack_reset(this);
 
-  fprintf(stderr, "call_stack_index is %ld\n", this->call_stack_index);
-  fprintf(stderr, "Starting j at %ld\n", this->int_regs_used[this->call_stack_index] - 1);
-  fprintf(stderr, "starting float j at %ld\n", this->float_regs_used[this->call_stack_index] - 1);
-
   for (j = this->int_regs_used[this->call_stack_index]-1; j >= 0; j--) {
     statement_append_instruction(this, "; popping arg");
     //statement_pop(this, ARG_REGISTERS_INT[j]);
