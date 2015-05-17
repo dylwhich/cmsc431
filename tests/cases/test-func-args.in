@@ -1,0 +1,7 @@
+def void math(int a, int b,) {
+    printl(a + b);
+    printl(a * b);
+}
+
+.math(5, 6,);
+.math(3, 2,);
