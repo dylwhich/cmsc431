@@ -391,7 +391,7 @@ void __block_grow_children(struct Block *this) {
   tmp = (struct SubBlock*)realloc(this->children, this->len_children * 2 * sizeof(struct SubBlock));
   if (tmp != NULL) {
     if (tmp != this->children) {
-      printf(";;;children changing from %x to %x\n", this->children, tmp);
+      printf(";;;children changing from %p to %p\n", this->children, tmp);
     }
     this->children = tmp;
     this->len_children *= 2;
@@ -499,7 +499,6 @@ void statement_shrink_stack(struct Statement *this, size_t bytes) {
 
 void statement_add_parameter(struct Statement *this, const char *name, enum yytokentype type) {
   struct Block *block = this->parent;
-  struct Symbol *symbol;
   enum Register reg;
 
   struct SymbolType s_type;
@@ -529,14 +528,6 @@ void statement_add_parameter(struct Statement *this, const char *name, enum yyto
 }
 
 void statement_call_setup(struct Statement *this) {
-  enum Register i;
-  // stores the current frame's values
-  /*for (i = RBX; i <= R15; i++) {
-    if (this->parent->registers[i]) {
-      statement_push(this, i);
-    }
-    }*/
-
   statement_append_instruction(this, "xor rax, rax");
   this->call_stack_index++;
 }
@@ -582,7 +573,6 @@ void statement_call_arg_hacky(struct Statement *this, long is_float, const char 
 
 void statement_call_finish(struct Statement *this, const char *func) {
   char out[128];
-  enum Register i;
   long j;
 
   statement_stack_align(this);
@@ -593,9 +583,9 @@ void statement_call_finish(struct Statement *this, const char *func) {
 
   statement_stack_reset(this);
 
-  fprintf(stderr, "call_stack_index is %d\n", this->call_stack_index);
-  fprintf(stderr, "Starting j at %d\n", this->int_regs_used[this->call_stack_index] - 1);
-  fprintf(stderr, "starting float j at %d\n", this->float_regs_used[this->call_stack_index] - 1);
+  fprintf(stderr, "call_stack_index is %ld\n", this->call_stack_index);
+  fprintf(stderr, "Starting j at %ld\n", this->int_regs_used[this->call_stack_index] - 1);
+  fprintf(stderr, "starting float j at %ld\n", this->float_regs_used[this->call_stack_index] - 1);
 
   for (j = this->int_regs_used[this->call_stack_index]-1; j >= 0; j--) {
     statement_append_instruction(this, "; popping arg");
@@ -606,13 +596,6 @@ void statement_call_finish(struct Statement *this, const char *func) {
     statement_append_instruction(this, "; popping arg");
     //statement_pop(this, ARG_REGISTERS_FLOAT[j]);
   }
-
-  // stores the current frame's values
-  /*for (i = R15; i > RAX; i--) {
-    if (this->parent->registers[i]) {
-      statement_pop(this, i);
-    }
-    }*/
 
   this->call_stack_index--;
 
