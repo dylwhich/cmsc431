@@ -157,7 +157,7 @@ func_decl: FUNCDEF any_type ID {
 
   st.type = FUNCTION;
 
-  sl.type = LABEL;
+  sl.type = REGISTER; // This isn't really true but eh...
 
   func = block_add_symbol(cur_scope, $3, st, sl)->type.value.function;
   func->return_type = $2;
