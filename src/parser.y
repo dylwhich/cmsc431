@@ -204,6 +204,9 @@ RETURN expr {
       yyerror("Function's return type does not match type of expression in return statement");
     }
 
+    if (cur_scope->containing_function->return_type == FLOATTYPE) {
+      statement_append_instruction(cur_stmt, "movq xmm0, QWORD [rsp]");
+    }
     statement_append_instruction(cur_stmt, "pop rax");
     statement_append_instruction(cur_stmt, "jmp .retlbl");
   }
@@ -427,8 +430,12 @@ func_call:
   }
 }
 arg_list {
+  struct Function *func = block_resolve_symbol(cur_scope, $2)->type.value.function;
   statement_call_finish(cur_stmt, $2);
-  $$ = block_resolve_symbol(cur_scope, $2)->type.value.function->return_type;
+  if (func->return_type == FLOATTYPE) {
+    statement_append_instruction(cur_stmt, "movq QWORD [rsp], xmm0");
+  }
+  $$ = func->return_type;
 };
 
 expr:
