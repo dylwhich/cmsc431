@@ -35,7 +35,9 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
     this->global_data->data_label = malloc(12 * sizeof(char));
     strcpy(this->global_data->data_label, "initglobals");
 
-    this->global_data->stack_size = 0;
+    this->stack_data = malloc(sizeof(struct StackData));
+    this->stack_data->stack_size = 0;
+    this->stack_data->realignment = 0;
 
     this->global_data->nonce = 0;
   } else {
@@ -218,6 +220,7 @@ struct Block *block_add_named_child(struct Block *this, const char *name) {
   this->children[this->num_children].type = BLOCK;
   block_init(&(this->children[this->num_children].value.block), tmp, this);
   this->children[this->num_children].value.block.containing_function = this->containing_function;
+  this->children[this->num_children].value.block.stack_data = this->stack_data;
 
   if (this->num_children != 0) {
   }
@@ -380,8 +383,14 @@ void block_destroy(struct Block *this) {
     free(this->global_data->data_label);
     free(this->global_data);
     this->global_data = NULL;
+    free(this->stack_data);
+    this->stack_data = NULL;
   } else {
     this->global_data = NULL;
+    if (this->stack_data != this->parent->stack_data) {
+      free(this->stack_data);
+      this->stack_data = NULL;
+    }
   }
 }
 
@@ -467,7 +476,7 @@ void statement_push(struct Statement *this, enum Register regname) {
   register_get_name(regname, reg);
   sprintf(inst, "push QWORD %s", reg);
   statement_append_instruction(this, inst);
-  this->parent->global_data->stack_size += 8;
+  this->parent->stack_data->stack_size += 8;
 }
 
 void statement_pop(struct Statement *this, enum Register regname) {
@@ -476,7 +485,7 @@ void statement_pop(struct Statement *this, enum Register regname) {
   register_get_name(regname, reg);
   sprintf(inst, "pop QWORD %s", reg);
   statement_append_instruction(this, inst);
-  this->parent->global_data->stack_size -= 8;
+  this->parent->stack_data->stack_size -= 8;
 }
 
 void statement_grow_stack(struct Statement *this, size_t bytes) {
@@ -485,7 +494,7 @@ void statement_grow_stack(struct Statement *this, size_t bytes) {
   sprintf(inst, "sub rsp, %zu", bytes);
 
   statement_append_instruction(this, inst);
-  this->parent->global_data->stack_size += bytes;
+  this->parent->stack_data->stack_size += bytes;
 }
 
 void statement_shrink_stack(struct Statement *this, size_t bytes) {
@@ -494,7 +503,7 @@ void statement_shrink_stack(struct Statement *this, size_t bytes) {
   sprintf(inst, "add rsp, %zu", bytes);
 
   statement_append_instruction(this, inst);
-  this->parent->global_data->stack_size -= bytes;
+  this->parent->stack_data->stack_size -= bytes;
 }
 
 void statement_add_parameter(struct Statement *this, const char *name, enum yytokentype type) {
@@ -623,17 +632,17 @@ void statement_push_int(struct Statement *this, long val) {
   char inst[64];
   sprintf(inst, "push QWORD %ld", val);
   statement_append_instruction(this, inst);
-  this->parent->global_data->stack_size += 8;
+  this->parent->stack_data->stack_size += 8;
 }
 
 void statement_stack_align(struct Statement *this) {
   char instr[32];
-  long alignment = this->parent->global_data->stack_size % STACK_ALIGNMENT;
+  long alignment = this->parent->stack_data->stack_size % STACK_ALIGNMENT;
 
   if (alignment) {
     sprintf(instr, "add rsp, %ld; REALIGN", alignment);
     statement_append_instruction(this, instr);
-    this->parent->global_data->stack_size += alignment;
+    this->parent->stack_data->stack_size += alignment;
     this->realignment = alignment;
   }
 }
@@ -643,7 +652,7 @@ void statement_stack_reset(struct Statement *this) {
   if (this->realignment) {
     sprintf(instr, "sub rsp, %ld; DEALIGN", this->realignment);
     statement_append_instruction(this, instr);
-    this->parent->global_data->stack_size -= this->realignment;
+    this->parent->stack_data->stack_size -= this->realignment;
     this->realignment = 0;
   }
 }

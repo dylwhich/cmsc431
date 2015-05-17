@@ -82,12 +82,15 @@ struct Statement {
   long call_stack_index;
 };
 
+struct StackData {
+  long stack_size;
+};
+
 struct GlobalData {
   char *bss_label;
   long next_bss_offset;
   char *data_label;
   long next_data_offset;
-  long stack_size;
   long nonce;
 };
 
@@ -109,6 +112,7 @@ struct Block {
   long registers[32];
   long next_local;
   struct Function *containing_function;
+  struct StackData *stack_data;
 };
 
 union SubBlockValue {
