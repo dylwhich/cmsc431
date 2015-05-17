@@ -261,28 +261,29 @@ if_else_stmt:
 
 print_stmt:
 PRINTL expr {
+  statement_pop(cur_stmt, R12);
   statement_push(cur_stmt, RSI);
   statement_push(cur_stmt, RDI);
   switch ($2) {
   case INTTYPE:
-    statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp+16]");
+    statement_append_instruction(cur_stmt, "mov rsi, R12");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_decimal_nl");
     statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   case FLOATTYPE:
-    statement_append_instruction(cur_stmt, "movq xmm0, QWORD [rsp+16]");
+    statement_append_instruction(cur_stmt, "movq xmm0, QWORD R12");
     statement_append_instruction(cur_stmt, "mov al, 1");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_float_nl");
     break;
   case STRINGTYPE:
-    statement_append_instruction(cur_stmt, "mov rsi, QWORD [rsp+16]");
+    statement_append_instruction(cur_stmt, "mov rsi, QWORD R12");
     statement_append_instruction(cur_stmt, "mov rdi, fmt_string_nl");
     statement_append_instruction(cur_stmt, "mov al, 0");
     break;
   case BOOLTYPE:
     statement_append_instruction(cur_stmt, "mov rdi, bool_str_true_nl");
     statement_append_instruction(cur_stmt, "mov rax, bool_str_false_nl");
-    statement_append_instruction(cur_stmt, "cmp QWORD [rsp+16], QWORD 0");
+    statement_append_instruction(cur_stmt, "cmp QWORD R12, QWORD 0");
     statement_append_instruction(cur_stmt, "cmovz rdi, rax");
     statement_append_instruction(cur_stmt, "mov al, 0");
     break;
@@ -297,21 +298,22 @@ PRINTL expr {
   statement_pop(cur_stmt, RSI);
 }
 | PRINT expr {
+  statement_pop(cur_stmt, R12);
   statement_push(cur_stmt, RSI);
   statement_push(cur_stmt, RDI);
   statement_call_setup(cur_stmt);
   switch ($2) {
   case INTTYPE:
     statement_call_arg_hacky(cur_stmt, 0, "fmt_decimal");
-    statement_call_arg_hacky(cur_stmt, 0, "QWORD [rsp+16]");
+    statement_call_arg_hacky(cur_stmt, 0, "QWORD R12");
     break;
   case FLOATTYPE:
     statement_call_arg_hacky(cur_stmt, 0, "fmt_float");
-    statement_call_arg_hacky(cur_stmt, 1, "QWORD [rsp+16]");
+    statement_call_arg_hacky(cur_stmt, 1, "QWORD R12");
     break;
   case STRINGTYPE:
     statement_call_arg_hacky(cur_stmt, 0, "fmt_string");
-    statement_call_arg_hacky(cur_stmt, 0, "QWORD [rsp+16]");
+    statement_call_arg_hacky(cur_stmt, 0, "QWORD R12");
     break;
   case BOOLTYPE:
     statement_call_arg_hacky(cur_stmt, 0, "rbx");
