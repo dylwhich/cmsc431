@@ -830,7 +830,10 @@ void string_write_nasm(FILE *out, const char *in) {
 
   if (*cur == '\\') {
     escaping = 1;
-  } else if (*cur < 32 || *cur == 34 || *cur > 126) {
+  } else if (*cur == 34) {
+    fprintf(out, "0\n");
+    return;
+  } else if (*cur < 32 || *cur > 126) {
     fprintf(out, "%d, ", *cur);
   } else {
     fprintf(out, "\"%c", *cur);
