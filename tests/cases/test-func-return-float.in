@@ -1,0 +1,7 @@
+def float math() {
+    float a;
+    a = 1.3337;
+    return a;
+}
+
+printl .math();
