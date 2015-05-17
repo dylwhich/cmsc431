@@ -163,7 +163,7 @@ func_decl: FUNCDEF any_type ID {
   func->return_type = $2;
 
   cur_scope = block_add_child(cur_scope);
-  cur_scope->containing_function = func;
+  block_set_function(cur_scope, func);
 } param_list {
   cur_stmt = block_add_statement(cur_scope); // append an extra statement so we can add labels and stuff
   statement_append_instruction(cur_stmt, ";; this is a dummy statement");

@@ -349,6 +349,13 @@ void block_register_release(struct Block *this, enum Register reg) {
   this->registers[reg] = 0;
 }
 
+void block_set_function(struct Block *this, struct Function *function) {
+  this->containing_function = function;
+  this->stack_data = malloc(sizeof(struct StackData));
+  this->stack_data->stack_size = 0;
+  this->stack_data->realignment = 0;
+}
+
 void block_destroy(struct Block *this) {
   struct SubBlock *child;
   struct Symbol *symbol, *tmp_symbol;

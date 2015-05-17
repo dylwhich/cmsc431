@@ -147,16 +147,14 @@ struct Symbol *block_add_symbol_initialized(struct Block *this, const char *name
 struct Symbol *block_resolve_symbol(struct Block *this, const char *name);
 
 struct SubBlock *block_get_first_child(struct Block *this);
-
 struct SubBlock *block_get_last_child(struct Block *this);
 
 enum Register block_register_acquire_int(struct Block *this);
-
 enum Register block_register_acquire_float(struct Block *this);
-
 long block_register_used(struct Block *this, enum Register reg);
-
 void block_register_release(struct Block *this, enum Register reg);
+
+void block_set_function(struct Block *this, struct Function *function);
 
 void block_destroy(struct Block *this);
 
