@@ -509,7 +509,7 @@ void asm_literal_float(double num) {
   sprintf(tmp, "%lf", num);
 
   block_get_unique_name(cur_scope, tmp2);
-  symbol = block_add_symbol_initialized(cur_scope, tmp2, FLOATTYPE, tmp);
+  symbol = block_add_symbol_initialized(&global_scope, tmp2, FLOATTYPE, tmp);
 
   symbol_get_reference(symbol, tmp2);
   sprintf(tmp, "mov rax, %s", tmp2);
