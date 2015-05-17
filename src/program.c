@@ -37,7 +37,6 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
 
     this->stack_data = malloc(sizeof(struct StackData));
     this->stack_data->stack_size = 0;
-    this->stack_data->realignment = 0;
 
     this->global_data->nonce = 0;
   } else {
@@ -353,7 +352,6 @@ void block_set_function(struct Block *this, struct Function *function) {
   this->containing_function = function;
   this->stack_data = malloc(sizeof(struct StackData));
   this->stack_data->stack_size = 0;
-  this->stack_data->realignment = 0;
 }
 
 void block_destroy(struct Block *this) {
