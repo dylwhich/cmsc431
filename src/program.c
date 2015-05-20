@@ -373,6 +373,7 @@ void block_destroy(struct Block *this) {
 
     if (symbol->type.type == FUNCTION) {
       // TODO Move this to a symbol_destroy
+      free(symbol->type.value.function->name);
       free(symbol->type.value.function);
     }
     free(symbol);

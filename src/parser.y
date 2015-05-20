@@ -161,6 +161,7 @@ func_decl: FUNCDEF any_type ID {
 
   func = block_add_symbol(cur_scope, $3, st, sl)->type.value.function;
   func->return_type = $2;
+  func->name = strdup($3);
 
   cur_scope = block_add_child(cur_scope);
   block_set_function(cur_scope, func);
@@ -193,6 +194,7 @@ multi_stmt { cur_scope = cur_scope->parent; } '}'
 
 return_stmt:
 RETURN expr {
+  char ret_stmt[64];
   if (cur_scope->containing_function == NULL) {
     yyerror("Invalid return statement outside function definition.");
   } else {
@@ -207,13 +209,17 @@ RETURN expr {
     if (cur_scope->containing_function->return_type == FLOATTYPE) {
       statement_append_instruction(cur_stmt, "movq xmm0, QWORD [rsp]");
     }
+
+    sprintf(ret_stmt, "jmp %s__ret", cur_scope->containing_function->name);
     statement_append_instruction(cur_stmt, "pop rax");
-    statement_append_instruction(cur_stmt, "jmp .retlbl");
+    statement_append_instruction(cur_stmt, ret_stmt);
   }
 }
 | RETURN {
+  char ret_stmt[64];
   if (cur_scope->containing_function != NULL) {
-  statement_append_instruction(cur_stmt, "jmp .retlbl");
+    sprintf(ret_stmt, "jmp %s__ret", cur_scope->containing_function->name);
+    statement_append_instruction(cur_stmt, ret_stmt);
   } else {
     yyerror("Invalid return statement outside function definition.");
   }
@@ -653,12 +659,13 @@ void while_loop(struct Block *block, struct Statement *test,
 void func_def(struct Block *block, const char *name, struct Statement *dummy_stmt, struct SubBlock *body) {
   struct Statement *last_stmt, *first_stmt;
   char start_label[64], end_label[64],
-    skip_jmp[64];
+    ret_label[64], skip_jmp[64];
 
   block_get_unique_name(block, end_label);
 
   sprintf(start_label, "%s:", name);
   sprintf(skip_jmp, "jmp %s", end_label);
+  sprintf(ret_label, "%s__ret:", name);
 
   strcat(end_label, ":");
 
@@ -672,7 +679,7 @@ void func_def(struct Block *block, const char *name, struct Statement *dummy_stm
   // I don't think we need to track push/pop within functions... yet...
   statement_append_instruction(dummy_stmt, "push rbp");
   statement_append_instruction(dummy_stmt, "mov rbp, rsp");
-  statement_append_instruction(last_stmt, ".retlbl:");
+  statement_append_instruction(last_stmt, ret_label);
   statement_append_instruction(last_stmt, "mov rsp, rbp");
   statement_append_instruction(last_stmt, "pop rbp");
   statement_append_instruction(last_stmt, "ret");

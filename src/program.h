@@ -39,6 +39,7 @@ struct StorageLocation {
 };
 
 struct Function {
+  char *name;
   enum yytokentype return_type;
   enum yytokentype arg_types[64];
 };
