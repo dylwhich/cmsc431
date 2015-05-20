@@ -1,0 +1,10 @@
+def void math() {
+    int i;
+    i = 0;
+    while (i < 5) {
+        printl i;
+	i = i + 1;
+    }
+}
+
+.math();
