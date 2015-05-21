@@ -1,0 +1,7 @@
+int i;
+i = 0;
+while (i < 10) {
+    printl i;
+    if (i == 6) break; else pass;
+    i = i + 1;
+}
