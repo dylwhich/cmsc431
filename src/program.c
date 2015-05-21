@@ -50,6 +50,7 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
   this->next_local = 0;
 
   this->containing_function = NULL;
+  this->containing_loop = NULL;
 };
 
 void block_write(struct Block *this, FILE *out) {
@@ -219,6 +220,7 @@ struct Block *block_add_named_child(struct Block *this, const char *name) {
   this->children[this->num_children].type = BLOCK;
   block_init(&(this->children[this->num_children].value.block), tmp, this);
   this->children[this->num_children].value.block.containing_function = this->containing_function;
+  this->children[this->num_children].value.block.containing_loop = this->containing_loop;
   this->children[this->num_children].value.block.stack_data = this->stack_data;
 
   if (this->num_children != 0) {
@@ -396,6 +398,10 @@ void block_destroy(struct Block *this) {
     if (this->stack_data != this->parent->stack_data) {
       free(this->stack_data);
       this->stack_data = NULL;
+    }
+
+    if (this->containing_loop != this->parent->containing_loop) {
+      free(this->containing_loop);
     }
   }
 }

@@ -26,7 +26,7 @@ int yylex();
  struct Statement *recursive_find_last_statement(struct SubBlock*);
  void if_stmt(struct Block*, struct Statement*,
 	      struct SubBlock*, struct SubBlock*);
- void while_loop(struct Block*, struct Statement*, struct SubBlock*);
+ void while_loop(struct Block*, struct Statement*, struct SubBlock*, char*, char*);
  void func_def(struct Block*, const char*, struct Statement *dummy_stmt,
 	       struct SubBlock*);
 
@@ -72,6 +72,8 @@ int yylex();
 %token NOP
 %token VOID
 %token RETURN
+%token BREAK
+%token CONTINUE
 %left IF
 %nonassoc ELSE
 %token WHILE
@@ -180,6 +182,8 @@ block
 | if_else_stmt
 | while_loop
 | { cur_stmt = block_add_statement(cur_scope); } return_stmt ';'
+| { cur_stmt = block_add_statement(cur_scope); } break_stmt ';'
+| { cur_stmt = block_add_statement(cur_scope); } continue_stmt ';'
 | { cur_stmt = block_add_statement(cur_scope); } print_stmt ';'
 | { cur_stmt = block_add_statement(cur_scope); } declare ';'
 | { cur_stmt = block_add_statement(cur_scope); } func_decl
@@ -225,15 +229,41 @@ RETURN expr {
   }
 };
 
+break_stmt: BREAK {
+  char break_jmp[64];
+  if (cur_scope->containing_loop != NULL) {
+    sprintf(break_jmp, "jmp %s", cur_scope->containing_loop->end_label);
+    statement_append_instruction(cur_stmt, break_jmp);
+  } else {
+    fprintf(stderr, "scope is %p\n", cur_scope);
+    yyerror("Invalid break statement outside of loop.");
+  }
+};
+
+continue_stmt: CONTINUE {
+  char cont_jmp[64];
+  if (cur_scope->containing_loop != NULL) {
+    sprintf(cont_jmp, "jmp %s", cur_scope->containing_loop->test_label);
+    statement_append_instruction(cur_stmt, cont_jmp);
+  } else {
+    yyerror("Invalid continue statement outside of loop.");
+  }
+};
+
 while_loop:
 {
   // Add a new statement for the test-expression
   cur_scope = block_add_child(cur_scope);
   cur_stmt = block_add_statement(cur_scope);
+
+  cur_scope->containing_loop = malloc(sizeof(struct WhileLoop));
+  block_get_unique_name(cur_scope, cur_scope->containing_loop->test_label);
+  block_get_unique_name(cur_scope, cur_scope->containing_loop->end_label);
 } WHILE '(' expr ')' stmt {
   struct SubBlock *last_child = block_get_last_child(cur_scope);
   while_loop(cur_scope, &(subblock_get_prev(last_child)->value.statement),
-	     last_child);
+	     last_child, cur_scope->containing_loop->test_label,
+	     cur_scope->containing_loop->end_label);
   cur_scope = cur_scope->parent;
 }
 ;
@@ -629,13 +659,11 @@ void if_stmt(struct Block *block, struct Statement *test,
 }
 
 void while_loop(struct Block *block, struct Statement *test,
-		struct SubBlock *stmt) {
+		struct SubBlock *stmt, char *test_label, char *done_label) {
   struct Statement *last_stmt;
-  char done_label[64], test_label[64],
-    done_jmp[64], test_jmp[64];
+  char done_jmp[64], test_jmp[64],
+    test_label_inst[64], done_label_inst[64];
 
-  block_get_unique_name(block, test_label);
-  block_get_unique_name(block, done_label);
 
   // We want to do the whole comparison every time
   sprintf(test->label, "%s:", test_label);
@@ -643,8 +671,8 @@ void while_loop(struct Block *block, struct Statement *test,
   sprintf(test_jmp, "jmp %s", test_label);
   sprintf(done_jmp, "jz %s", done_label);
 
-  strcat(test_label, ":");
-  strcat(done_label, ":");
+  sprintf(test_label_inst, "%s:", test_label);
+  sprintf(done_label_inst, "%s:", done_label);
 
   last_stmt = recursive_find_last_statement(stmt);
 
@@ -653,7 +681,7 @@ void while_loop(struct Block *block, struct Statement *test,
   statement_append_instruction(test, done_jmp);
 
   statement_append_instruction(last_stmt, test_jmp);
-  statement_append_instruction(last_stmt, done_label);
+  statement_append_instruction(last_stmt, done_label_inst);
 }
 
 void func_def(struct Block *block, const char *name, struct Statement *dummy_stmt, struct SubBlock *body) {

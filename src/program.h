@@ -44,6 +44,10 @@ struct Function {
   enum yytokentype arg_types[64];
 };
 
+struct WhileLoop {
+  char test_label[64], end_label[64];
+};
+
 enum SymbolTypeType {
   PRIMITIVE,
   USER,
@@ -113,6 +117,7 @@ struct Block {
   long registers[32];
   long next_local;
   struct Function *containing_function;
+  struct WhileLoop *containing_loop;
   struct StackData *stack_data;
 };
 
