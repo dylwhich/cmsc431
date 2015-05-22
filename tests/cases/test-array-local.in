@@ -1,0 +1,14 @@
+def int herp(int n,) {
+    int arr[6];
+    int i;
+    i = 0;
+
+    while (i < 6) {
+        arr[i] = i*i;
+	i = i + 1;
+    }
+
+    return arr[n];
+}
+
+printl .herp(2,);

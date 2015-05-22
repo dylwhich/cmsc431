@@ -1,0 +1,6 @@
+int herp[5];
+
+herp[0] = 1;
+herp[3] = 6;
+printl herp[0];
+printl herp[3];

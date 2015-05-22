@@ -1,0 +1,3 @@
+int herp[5];
+
+printl herp[3];
