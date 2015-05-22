@@ -366,7 +366,6 @@ PRINTL expr {
 ;
 
 declare:
-// TODO combine these somehow
 INTTYPE ID {
   struct SymbolType st;
   struct StorageLocation sl;
@@ -546,7 +545,7 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
       yyerror("Unknown identifier");
     } else {
       if (array->type.type != ARRAY) {
-	yyerror("Cannot index non-array statement");
+	yyerror("Cannot index non-array expression");
       } else {
 	statement_pop(cur_stmt, RAX);
 	symbol_get_array_reference(array, deref, RAX);
