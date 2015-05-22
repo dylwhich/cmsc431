@@ -37,6 +37,7 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
 
     this->stack_data = malloc(sizeof(struct StackData));
     this->stack_data->stack_size = 0;
+    this->stack_data->locals_size = 0;
 
     this->global_data->nonce = 0;
   } else {
@@ -254,9 +255,9 @@ struct Symbol *block_add_symbol(struct Block *this, const char *name, struct Sym
     this->global_data->next_bss_offset += 8;
   } else if (symbol->location.type == LOCAL) {
     printf(";; adding symbol %s, current next_local is %ld\n", name, this->stack_data->locals_size);
-    symbol_init(symbol, type, this->stack_data->locals_size, 8, this, name);
     this->stack_data->locals_size += 8;
     this->stack_data->stack_size += 8;
+    symbol_init(symbol, type, this->stack_data->locals_size, 8, this, name);
     //symbol->location = location;
     symbol->location.type = location.type;
   }
@@ -268,14 +269,20 @@ struct Symbol *block_add_symbol(struct Block *this, const char *name, struct Sym
 struct Symbol *block_add_symbol_array(struct Block *this, const char *name, struct SymbolType type, struct StorageLocation location, long size) {
   struct Symbol *symbol = (struct Symbol*)malloc(sizeof(struct Symbol));
   symbol->type = type;
+  symbol->location = location;
 
   if (symbol->location.type == LABEL) {
-    symbol_init(symbol, type, this->global_data->next_bss_offset, 8, this, name);
+    printf(";; adding symbol ARRAY %s, current next global is %ld\n", name, this->global_data->next_bss_offset);
+    symbol_init(symbol, type, this->global_data->next_bss_offset, 8 * size, this, name);
     symbol->location = location;
     this->global_data->next_bss_offset += 8 * size;
   } else if (symbol->location.type == LOCAL) {
     printf(";; adding symbol ARRAY %s, current next local is %ld\n", name, this->stack_data->locals_size);
     this->stack_data->locals_size += 8 * size;
+    this->stack_data->stack_size += 8 * size;
+    printf(";; placing %s at offset %ld (previous %ld), with size %ld\n", name, this->stack_data->locals_size,
+	   this->stack_data->locals_size - 8 * size, 8 * size);
+    symbol_init(symbol, type, this->stack_data->locals_size, 8 * size, this, name);
     symbol->location.type = location.type;
   }
 
@@ -373,6 +380,7 @@ void block_set_function(struct Block *this, struct Function *function) {
   this->containing_function = function;
   this->stack_data = malloc(sizeof(struct StackData));
   this->stack_data->stack_size = 0;
+  this->stack_data->locals_size = 0;
 }
 
 void block_destroy(struct Block *this) {
@@ -1064,7 +1072,7 @@ void symbol_get_array_reference(struct Symbol *this, char *out, enum Register in
     break;
 
   case LOCAL:
-    sprintf(out, "qword [%s*8+rbp+%ld]", regname, this->offset);
+    sprintf(out, "qword [%s*8+rbp-%ld]", regname, this->offset);
     break;
 
   default:
