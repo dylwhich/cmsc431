@@ -458,6 +458,37 @@ ID '=' expr {
     }
   }
 }
+| ID '[' expr ']' '=' expr {
+  // integer assignment
+  char deref[64];
+  char inst[80];
+  struct Symbol *array = block_resolve_symbol(cur_scope, $1);
+
+  if ($3 != INTTYPE) {
+    yyerror("Array index is not integer.");
+  } else {
+    array = block_resolve_symbol(cur_scope, $1);
+
+    if (array == NULL) {
+      yyerror("Unknown identifier");
+    } else {
+      if (array->type.type != ARRAY) {
+	yyerror("Cannot index non-array expression");
+      } else {
+	if (array->type.value.primitive != $6) {
+	  yyerror("Incomaptible types in assignment");
+	} else {
+	  statement_pop(cur_stmt, RAX);
+	  statement_pop(cur_stmt, RDX);
+	  symbol_get_array_reference(array, deref, RDX);
+	  sprintf(inst, "mov %s, rax", deref);
+	  statement_append_instruction(cur_stmt, inst);
+	  $$ = $6;
+	}
+      }
+    }
+  }
+}
 ;
 
 func_call:
