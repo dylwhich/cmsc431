@@ -52,6 +52,7 @@ enum SymbolTypeType {
   PRIMITIVE,
   USER,
   FUNCTION,
+  ARRAY,
 };
 
 union SymbolTypeValue {

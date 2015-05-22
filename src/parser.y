@@ -417,6 +417,24 @@ INTTYPE ID {
 
   block_add_symbol(cur_scope, $2, st, sl);
 }
+| INTTYPE ID '[' INTEGER ']' {
+  struct SymbolType st;
+  struct StorageLocation sl;
+  struct Symbol *symbol;
+
+  if (block_resolve_symbol(cur_scope, $2) != NULL) {
+    fprintf(stderr, "Symbol: %s\n", $2);
+    yyerror("Double declaration invalid");
+  }
+
+  st.type = ARRAY;
+  st.value.primitive = INTTYPE;
+
+  sl.type = cur_scope->containing_function == NULL ? LABEL : LOCAL;
+
+  symbol = block_add_symbol(cur_scope, $2, st, sl);
+  symbol->size = $4;
+}
 ;
 
 assign:
