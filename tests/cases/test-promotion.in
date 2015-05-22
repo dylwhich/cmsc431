@@ -1,0 +1,4 @@
+printl 3.5 + 1;
+printl 2 * 3.6 + 8;
+printl 10 / 2.5;
+printl 13.0 % 7;
