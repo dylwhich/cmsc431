@@ -1035,3 +1035,21 @@ void symbol_get_reference(struct Symbol *this, char *out) {
     break;
   }
 }
+
+void symbol_get_array_reference(struct Symbol *this, char *out, enum Register index_register) {
+  char regname[16];
+  register_get_name(index_register, regname);
+  switch(this->location.type) {
+  case LABEL:
+    sprintf(out, "qword [%s*8+%s+%ld]", regname, this->scope->global_data->bss_label, this->offset);
+    break;
+
+  case LOCAL:
+    sprintf(out, "qword [%s*8+rbp+%ld]", regname, this->offset);
+    break;
+
+  default:
+    fprintf(stderr, "Invalid type for array symbol.\n");
+    break;
+  }
+}

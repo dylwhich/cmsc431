@@ -535,6 +535,31 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
   }
   $$ = block_resolve_symbol(cur_scope, $1)->type.value.primitive;
 }
+| ID '[' expr ']' {
+  struct Symbol *array;
+  char deref[64];
+  char inst[128];
+  if ($3 != INTTYPE) {
+    yyerror("Array index is not integer.");
+  } else {
+    array = block_resolve_symbol(cur_scope, $1);
+
+    if (array == NULL) {
+      yyerror("Unknown identifier");
+    } else {
+      if (array->type.type != ARRAY) {
+	yyerror("Cannot index non-array statement");
+      } else {
+	statement_pop(cur_stmt, RAX);
+	symbol_get_array_reference(array, deref, RAX);
+	sprintf(inst, "mov rax, %s", deref);
+	statement_append_instruction(cur_stmt, inst);
+	statement_push(cur_stmt, RAX);
+	$$ = array->type.value.primitive;
+      }
+    }
+  }
+}
 | func_call
 | expr BOOL_OR expr            { $$ = BOOLTYPE; oper_bool_or($1, $3); }
 | expr BOOL_AND expr           { $$ = BOOLTYPE; oper_bool_and($1, $3); }

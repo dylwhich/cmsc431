@@ -197,6 +197,7 @@ void symbol_init(struct Symbol *this, struct SymbolType type, long offset,
 void symbol_write_declaration(struct Symbol *this, FILE *out);
 void symbol_write_reference(struct Symbol *this, FILE *out);
 void symbol_get_reference(struct Symbol *this, char *out);
+void symbol_get_array_reference(struct Symbol *this, char *out, enum Register index_register);
 
 void register_write_name(enum Register regname, FILE *out);
 void register_get_name(enum Register regname, char *out);
