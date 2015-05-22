@@ -770,6 +770,7 @@ void func_def(struct Block *block, const char *name, struct Statement *dummy_stm
   // I don't think we need to track push/pop within functions... yet...
   statement_append_instruction(dummy_stmt, "push rbp");
   statement_append_instruction(dummy_stmt, "mov rbp, rsp");
+  statement_append_instruction(last_stmt, "mov rax, [rsp]");
   statement_append_instruction(last_stmt, ret_label);
   statement_append_instruction(last_stmt, "mov rsp, rbp");
   statement_append_instruction(last_stmt, "pop rbp");
