@@ -1,0 +1,5 @@
+def int herp(int a, int b,) {
+    a + b;
+}
+
+printl .herp(1, 3,);
