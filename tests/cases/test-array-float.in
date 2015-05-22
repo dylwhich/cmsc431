@@ -1,0 +1,13 @@
+float numbers[5];
+
+numbers[0] = 1.2345;
+numbers[1] = 1.3337;
+numbers[2] = 0.1189;
+numbers[3] = 9.9881;
+numbers[4] = 9.9911;
+
+printl numbers[3];
+numbers[3] = 5.375;
+printl numbers[3];
+
+printl numbers[4];
