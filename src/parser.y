@@ -24,6 +24,8 @@ int yylex();
 
  struct Statement *recursive_find_first_statement(struct SubBlock*);
  struct Statement *recursive_find_last_statement(struct SubBlock*);
+ void do_declare(const char *name, enum yytokentype type);
+ void do_array_declare(const char *name, enum yytokentype type, long size);
  void if_stmt(struct Block*, struct Statement*,
 	      struct SubBlock*, struct SubBlock*);
  void while_loop(struct Block*, struct Statement*, struct SubBlock*, char*, char*);
@@ -367,70 +369,22 @@ PRINTL expr {
 
 declare:
 INTTYPE ID {
-  struct SymbolType st;
-  struct StorageLocation sl;
-
-  if (block_resolve_symbol(cur_scope, $2) != NULL) {
-    fprintf(stderr, "Symbol %s:\n", $2);
-    yyerror("Double declaration invalid");
-  }
-
-  st.type = PRIMITIVE;
-  st.value.primitive = INTTYPE;
-
-  printf(";; declaring %s\n", $2);
-
-  sl.type = cur_scope->containing_function == NULL ? LABEL : LOCAL;
-
-  block_add_symbol(cur_scope, $2, st, sl);
+  do_declare($2, INTTYPE);
 }
 | FLOATTYPE ID {
-  struct SymbolType st;
-  struct StorageLocation sl;
-
-  if (block_resolve_symbol(cur_scope, $2) != NULL) {
-    fprintf(stderr, "Symbol %s:\n", $2);
-    yyerror("Double declaration invalid");
-  }
-
-  st.type = PRIMITIVE;
-  st.value.primitive = FLOATTYPE;
-
-  sl.type = LABEL;
-
-  block_add_symbol(cur_scope, $2, st, sl);
+  do_declare($2, FLOATTYPE);
 }
 | BOOLTYPE ID {
-  struct SymbolType st;
-  struct StorageLocation sl;
-
-  if (block_resolve_symbol(cur_scope, $2) != NULL) {
-    fprintf(stderr, "Symbol %s:\n", $2);
-    yyerror("Double declaration invalid");
-  }
-
-  st.type = PRIMITIVE;
-  st.value.primitive = BOOLTYPE;
-
-  sl.type = cur_scope->containing_function == NULL ? LABEL : LOCAL;
-
-  block_add_symbol(cur_scope, $2, st, sl);
+  do_declare($2, BOOLTYPE);
 }
 | INTTYPE ID '[' INTEGER ']' {
-  struct SymbolType st;
-  struct StorageLocation sl;
-
-  if (block_resolve_symbol(cur_scope, $2) != NULL) {
-    fprintf(stderr, "Symbol: %s\n", $2);
-    yyerror("Double declaration invalid");
-  }
-
-  st.type = ARRAY;
-  st.value.primitive = INTTYPE;
-
-  sl.type = cur_scope->containing_function == NULL ? LABEL : LOCAL;
-
-  block_add_symbol_array(cur_scope, $2, st, sl, $4);
+  do_array_declare($2, INTTYPE, $4);
+}
+| FLOATTYPE ID '[' INTEGER ']' {
+  do_array_declare($2, FLOATTYPE, $4);
+}
+| BOOLTYPE ID '[' INTEGER ']' {
+  do_array_declare($2, BOOLTYPE, $4);
 }
 ;
 
@@ -680,6 +634,42 @@ struct Statement *recursive_find_last_statement(struct SubBlock *stmt) {
 
   fprintf(stderr, "Unknown block type in recursive find");
   return NULL;
+}
+
+void do_declare(const char *name, enum yytokentype type) {
+  struct SymbolType st;
+  struct StorageLocation sl;
+
+  if (block_resolve_symbol(cur_scope, name) != NULL) {
+    fprintf(stderr, "Symbol %s:\n", name);
+    yyerror("Double declaration invalid");
+  }
+
+  st.type = PRIMITIVE;
+  st.value.primitive = type;
+
+  printf(";; declaring %s\n", name);
+
+  sl.type = cur_scope->containing_function == NULL ? LABEL : LOCAL;
+
+  block_add_symbol(cur_scope, name, st, sl);
+}
+
+void do_array_declare(const char *name, enum yytokentype type, long size) {
+  struct SymbolType st;
+  struct StorageLocation sl;
+
+  if (block_resolve_symbol(cur_scope, name) != NULL) {
+    fprintf(stderr, "Symbol: %s\n", name);
+    yyerror("Double declaration invalid");
+  }
+
+  st.type = ARRAY;
+  st.value.primitive = type;
+
+  sl.type = cur_scope->containing_function == NULL ? LABEL : LOCAL;
+
+  block_add_symbol_array(cur_scope, name, st, sl, size);
 }
 
 void if_stmt(struct Block *block, struct Statement *test,
