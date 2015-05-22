@@ -47,8 +47,6 @@ void block_init(struct Block *this, const char *name, struct Block *parent) {
     this->registers[i] = 0;
   }
 
-  this->next_local = 0;
-
   this->containing_function = NULL;
   this->containing_loop = NULL;
 };
@@ -174,8 +172,8 @@ void block_write_body(struct Block *this, FILE *out) {
     }
   }
 
-  if (this->next_local != 0) {
-    fprintf(out, "sub rsp, %ld", this->next_local);
+  if (this->stack_data->locals_size != 0) {
+    fprintf(out, "sub rsp, %ld", this->stack_data->locals_size);
   }
 
   fprintf(out, ";end block_body %s\n", this->name);
@@ -255,9 +253,10 @@ struct Symbol *block_add_symbol(struct Block *this, const char *name, struct Sym
     symbol->location = location;
     this->global_data->next_bss_offset += 8;
   } else if (symbol->location.type == LOCAL) {
-    printf(";; adding symbol %s, current next_local is %ld\n", name, this->next_local);
-    symbol_init(symbol, type, this->next_local, 8, this, name);
-    this->next_local += 8;
+    printf(";; adding symbol %s, current next_local is %ld\n", name, this->stack_data->locals_size);
+    symbol_init(symbol, type, this->stack_data->locals_size, 8, this, name);
+    this->stack_data->locals_size += 8;
+    this->stack_data->stack_size += 8;
     //symbol->location = location;
     symbol->location.type = location.type;
   }

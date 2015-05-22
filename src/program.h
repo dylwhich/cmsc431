@@ -90,6 +90,7 @@ struct Statement {
 
 struct StackData {
   long stack_size;
+  long locals_size;
 };
 
 struct GlobalData {
@@ -116,7 +117,6 @@ struct Block {
   struct Symbol *symbol_table;
   struct GlobalData *global_data;
   long registers[32];
-  long next_local;
   struct Function *containing_function;
   struct WhileLoop *containing_loop;
   struct StackData *stack_data;
