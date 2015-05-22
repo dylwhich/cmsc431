@@ -23,8 +23,10 @@ must be suffixed with a semicolon. All whitespace is ignored.
 The following mathematical operations are supported in decreasing
 order of precedence. Expressions may be constructed from signed 64 bit
 integers, double-precision floating-points, or other mathematical
-expressions. Integers and floating-points may not be mixed in the same
-expression.
+expressions. Using operations on both integers and floating-points
+will automaticallly promote them to floating-points. Booleans with the
+value true will be treated as 1 or 1.0, and false will be treated as 0
+or 0.0, as necessary.
 .TP
 (expression)
 Parentheses. Override precedence of operators outside the parentheses. 
@@ -78,16 +80,34 @@ true if expression evaluates to false, and false otherwise.
 .SS Variables
 The language supports an arbitrary number of integer and
 floating-point variables. They must be declared and initialized before
-they can be used.  The value of a variable undefined until it has been
-assigned to at least once. A valid variable identifier is within 1 and
-63 characters long, contains only alphanumeric characters and the
-underscore, and does not begin with a number.
+they can be used.  The value of a variable is undefined until it has
+been assigned to at least once. A valid variable identifier is within
+1 and 63 characters long, contains only alphanumeric characters and
+the underscore, and does not begin with a number.
 .TP
 int name
 Declares an integer variable with the specified name.
 .TP
 float name
 Declares a floating-point variable with the specified name.
+.TP
+bool name
+Declares a boolean variable with the specified name.
+
+.
+.SS Arrays
+The language supports statically-allocated arrays of type int, float,
+or bool. No bounds checking is performed.
+.TP
+int name[size]
+Declares an integer array of length size with the specified name
+.TP
+float name[size];
+Declares a floating-point array of length size with the specified name
+.TP
+bool name[size];
+Declares a boolean array of length size with the specified name
+
 .
 .SS Print Statements
 The language supports two kinds of print statements: one which prints
@@ -119,7 +139,10 @@ if (expr) { stmt1; ...; } else { stmt2; ...; }
 .TP
 if (expr) stmt1; else stmt2;
 Executes stmt1 if expr evaluates to a nonzero value, or executes stmt2
-if expr is zero.
+if expr is zero. To execute an if statement without an else statement,
+the following may be used:
+.TP
+if (expr) stmt1; else pass;
 
 .SS While Loops
 The language supports while loops.
@@ -129,6 +152,18 @@ while (expr) { stmt; ...; }
 while (expr) stmt;
 Executes stmt until expr evaluates to zero.
 
+.
+.SS Break and Continue
+The language supports breaking out of loops and continuing from their
+start.
+.TP
+break;
+Immediately ends the loop regardless of the evaluation of expr.
+.TP
+continue;
+Immediately moves execution to the beginning of the loop. This causes
+the rest of the loop to be skipped, and expr will be evaluated again.
+
 .SS Functions
 The language supports user-defined functions, which may be written as
 follows:
@@ -137,11 +172,26 @@ def type name(type name, type name, ... ,) { stmt; ...; }
 .TP
 def type name(type name, type name, ... ,) stmt;
 
-Note that a trailing comma is required in parameter lists. Function calls
-are written as follows:
+Type may be int, float, or bool. The return value may also be void, to
+indicate that no value will be returned from this function.
+
+Note that a trailing comma is required in parameter lists. Function
+calls are written as follows:
 .TP
 \.name(expr, expr, ... ,);
-Note that a trailing comma is required in the argument list.
+Note that a trailing comma is also required in the argument list.
+
+.
+.SS Return Statements
+The language supports returning from functions at any point. If no
+return statement is present in a non-void function, the return value
+of the last statement will be returned automatically.
+.TP
+return expr;
+Returns a value from the function and immediately exits the function.
+.TP
+return;
+Immediately exits from a void function.
 
 .
 .SH LIMITATIONS
