@@ -50,7 +50,9 @@ int yylex();
  void oper_neg(enum yytokentype);
  void oper_mod(enum yytokentype);
  void oper_pow(enum yytokentype);
- void type_check(enum yytokentype, enum yytokentype);
+
+ long type_promote(enum yytokentype, enum yytokentype);
+ enum yytokentype type_check(enum yytokentype, enum yytokentype);
 %}
 
 /* yylval union type */
@@ -553,14 +555,14 @@ INTEGER           { asm_literal_int($1); $$ = INTTYPE; }
 | expr '>' expr                { $$ = BOOLTYPE; oper_bool_gt($1, $3); }
 | expr BOOL_GREATER_EQUAL expr { $$ = BOOLTYPE; oper_bool_ge($1, $3); }
 
-| expr '+' expr   { type_check($1, $3); $$ = $3; oper_add($$); }
-| expr '-' expr   { type_check($1, $3); $$ = $3; oper_sub($$); }
-| expr '*' expr   { type_check($1, $3); $$ = $3; oper_mul($$); }
-| expr '/' expr   { type_check($1, $3); $$ = $3; oper_div($$); }
-| expr '%' expr   { type_check($1, $3); $$ = $3; oper_mod($$); }
+| expr '+' expr   { $$ = type_check($1, $3); oper_add($$); }
+| expr '-' expr   { $$ = type_check($1, $3); oper_sub($$); }
+| expr '*' expr   { $$ = type_check($1, $3); oper_mul($$); }
+| expr '/' expr   { $$ = type_check($1, $3); oper_div($$); }
+| expr '%' expr   { $$ = type_check($1, $3); oper_mod($$); }
 | '-' expr        { $$ = $2; oper_neg($$); }
 | '!' expr        { $$ = BOOLTYPE; oper_bool_not($2); }
-| expr POW expr   { type_check($1, $3); $$ = $3; oper_pow($$); }
+| expr POW expr   { $$ = type_check($1, $3); oper_pow($$); }
 | '(' expr ')'    { $$ = $2; }
 ;
 
@@ -1051,10 +1053,50 @@ void oper_pow(enum yytokentype type) {
   }
 }
 
-void type_check(enum yytokentype a, enum yytokentype b) {
-  if (a != b) {
+long type_promote(enum yytokentype a, enum yytokentype b) {
+  char inst[32];
+  // b is on top of stack
+  // a is next
+
+  // no need to convert anything
+  if (a == b) {
+    return 1;
+  }
+
+  if (a == FLOATTYPE && (b == INTTYPE || b == BOOLTYPE)) {
+    // we need to convert B to an int
+    statement_append_instruction(cur_stmt, "fild QWORD [rsp]");
+    statement_stack_align(cur_stmt);
+    sprintf(inst, "fstp QWORD [rsp+%ld]", cur_stmt->realignment);
+    statement_append_instruction(cur_stmt, inst);
+    statement_stack_reset(cur_stmt);
+    return 1;
+  }
+  if (b == FLOATTYPE && (a == INTTYPE || a == BOOLTYPE)) {
+    // we need to convert A to an int
+    statement_append_instruction(cur_stmt, "fild QWORD [rsp+8]");
+    statement_stack_align(cur_stmt);
+    sprintf(inst, "fstp QWORD [rsp+%ld]", cur_stmt->realignment+8);
+    statement_append_instruction(cur_stmt, inst);
+    statement_stack_reset(cur_stmt);
+    return 2;
+  }
+
+  return 0;
+}
+
+enum yytokentype type_check(enum yytokentype a, enum yytokentype b) {
+  long res = type_promote(a, b);
+  if (!res) {
     fprintf(stderr, "%d and %d: ", a, b);
     yyerror("Incompatible Types in expression");
+    return a;
+  } else if (res == 1) {
+    return a;
+  } else if (res == 2) {
+    return b;
+  } else {
+    return a;
   }
 }
 
