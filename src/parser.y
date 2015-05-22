@@ -420,7 +420,6 @@ INTTYPE ID {
 | INTTYPE ID '[' INTEGER ']' {
   struct SymbolType st;
   struct StorageLocation sl;
-  struct Symbol *symbol;
 
   if (block_resolve_symbol(cur_scope, $2) != NULL) {
     fprintf(stderr, "Symbol: %s\n", $2);
@@ -432,8 +431,7 @@ INTTYPE ID {
 
   sl.type = cur_scope->containing_function == NULL ? LABEL : LOCAL;
 
-  symbol = block_add_symbol(cur_scope, $2, st, sl);
-  symbol->size = $4;
+  block_add_symbol_array(cur_scope, $2, st, sl, $4);
 }
 ;
 

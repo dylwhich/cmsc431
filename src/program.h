@@ -148,6 +148,10 @@ void block_get_unique_name(struct Block *this, char *out);
 struct Symbol *block_add_symbol(struct Block *this, const char *name,
 				struct SymbolType type,
 				struct StorageLocation location);
+struct Symbol *block_add_symbol_array(struct Block *this, const char *name,
+				struct SymbolType type,
+				struct StorageLocation location,
+				long size);
 struct Symbol *block_add_symbol_initialized(struct Block *this, const char *name,
 					    enum yytokentype type,
 					    const char *initial_value);

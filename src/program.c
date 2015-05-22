@@ -265,6 +265,26 @@ struct Symbol *block_add_symbol(struct Block *this, const char *name, struct Sym
   return symbol;
 }
 
+struct Symbol *block_add_symbol_array(struct Block *this, const char *name, struct SymbolType type, struct StorageLocation location, long size) {
+  struct Symbol *symbol = (struct Symbol*)malloc(sizeof(struct Symbol));
+  symbol->type = type;
+
+  if (symbol->location.type == LABEL) {
+    symbol_init(symbol, type, this->global_data->next_bss_offset, 8, this, name);
+    symbol->location = location;
+    this->global_data->next_bss_offset += 8 * size;
+  } else if (symbol->location.type == LOCAL) {
+    printf(";; adding symbol ARRAY %s, current next local is %ld\n", name, this->stack_data->locals_size);
+    this->stack_data->locals_size += 8 * size;
+    symbol->location.type = location.type;
+  }
+
+  symbol->size = 8 * size;
+
+  HASH_ADD_STR(this->symbol_table, label, symbol);
+  return symbol;
+}
+
 struct Symbol *block_add_symbol_initialized(struct Block *this, const char *name, enum yytokentype type, const char *initial_value) {
   struct Symbol *symbol = (struct Symbol*)malloc(sizeof(struct Symbol));
   struct SymbolType st;
