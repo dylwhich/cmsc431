@@ -1,39 +1,20 @@
-Project 6
+Project 7
 
-Name: Dylan Whichard (dylwhich) 
+Name: Dylan Whichard (dylwhich)
 ===============================================================================
 
-Correctness/Completeness (55%)
--7  (10 pts) Functions support return types
--7  (10 pts) Return statements can return expression values
--3   (5 pts) Compiler validates that the number of arguments is correct
--7  (10 pts) Compiler validates that the types of arguments are correct
--7  (10 pts) Function calls can be used in expressions
--7  (10 pts) Function calls can be used as parameters
-
-Testing (30%)
-     (5 pts) "Easy" testcase
-    (10 pts) "Medium" testcase
-    (15 pts) "Hard" testcase
-
-Style (5%)
-     (5 pts) Sensible names given to variables, functions, grammar symbols etc.
-             Algorithms are not unnecessarily complex.
-             Code adheres to a reasonable degree of neatness.
-             Constants are declared for meaningful literal values when possible
-
-Documentation (10%)
-     (5 pts) Adequate documentation for files, functions, classes, complex 
-             parts of code, etc.
-     (5 pts) Man page describes structure and features of the language
+15 - Arrays
+10 - Else Statements
+20 - Break and Continue
+20 - "Better" Error Reporting
+25 - Stack-allocated Arrays (not entirely dynamic)
 
 -------------------------------------------------------------------------------
 
 Comments:
 
-It looks like some of the foundations of the functionality are there, but I had
-trouble getting some of it into working assembly.
+Well done! 
 
 ===============================================================================
 
-Total Score: 62/100
+Total Score: 90/100
